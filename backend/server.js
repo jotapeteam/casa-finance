@@ -47,6 +47,18 @@ async function main() {
   } else {
     console.warn('⚠️  TELEGRAM_BOT_TOKEN não configurado — bot não iniciado');
   }
+
+  // Keep-alive: pinga o próprio servidor a cada 10 min para não dormir no Render
+  if (process.env.NODE_ENV === 'production') {
+    const https = require('https');
+    const selfUrl = process.env.RENDER_EXTERNAL_URL || `https://casa-finance-hfso.onrender.com`;
+    setInterval(() => {
+      https.get(`${selfUrl}/api/health`, (res) => {
+        console.log(`🏓 Keep-alive ping: ${res.statusCode}`);
+      }).on('error', () => {});
+    }, 10 * 60 * 1000);
+    console.log('🏓 Keep-alive ativado');
+  }
 }
 
 main().catch((e) => {
