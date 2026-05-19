@@ -27,3 +27,10 @@ export const updateTransaction = (id, data) => api.put(`/transactions/${id}`, da
 export const deleteTransaction = (id) => api.delete(`/transactions/${id}`).then(r => r.data);
 export const getSummary = (params) => api.get('/summary', { params }).then(r => r.data);
 export const getMonthlyEvolution = () => api.get('/summary/monthly-evolution').then(r => r.data);
+
+export const getRecurring = () => api.get('/recurring').then(r => r.data);
+export const getRecurringPreview = (params) => api.get('/recurring/preview', { params }).then(r => r.data);
+export const createRecurring = (data) => api.post('/recurring', data).then(r => r.data);
+export const updateRecurring = (id, data) => api.put(`/recurring/${id}`, data).then(r => r.data);
+export const deleteRecurring = (id) => api.delete(`/recurring/${id}`).then(r => r.data);
+export const confirmRecurring = (id, params) => api.post(`/recurring/${id}/confirm`, null, { params }).then(r => r.data);

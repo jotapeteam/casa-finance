@@ -5,6 +5,7 @@ import { getTransactions, getSummary, getMonthlyEvolution, createTransaction, up
 import TransactionModal from '../components/TransactionModal.jsx';
 import TransactionTable from '../components/TransactionTable.jsx';
 import { CategoryPieChart, MonthlyBarChart } from '../components/Charts.jsx';
+import PrevisaoMes from '../components/PrevisaoMes.jsx';
 
 function formatCurrency(value) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -153,6 +154,9 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Previsão de gastos fixos */}
+      <PrevisaoMes month={month} year={year} onConfirmed={load} />
 
       {/* Tabela */}
       <TransactionTable transactions={transactions} onEdit={openEdit} onDelete={handleDelete} />

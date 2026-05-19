@@ -8,19 +8,34 @@ datasource db {
 }
 
 model Transaction {
-  id          Int      @id @default(autoincrement())
-  date        DateTime @default(now())
-  amount      Float
-  description String
-  category    String
-  person      String   // "JOTAPE" ou "Carol"
-  type        String   // "gasto" ou "receita"
-  source      String   @default("web") // "web" ou "telegram"
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                 Int              @id @default(autoincrement())
+  date               DateTime         @default(now())
+  amount             Float
+  description        String
+  category           String
+  person             String
+  type               String
+  source             String           @default("web")
+  recurringExpenseId Int?
+  recurringExpense   RecurringExpense? @relation(fields: [recurringExpenseId], references: [id])
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
   @@index([date])
   @@index([person])
   @@index([type])
   @@index([category])
+}
+
+model RecurringExpense {
+  id           Int           @id @default(autoincrement())
+  description  String
+  amount       Float
+  category     String
+  person       String
+  dayOfMonth   Int
+  active       Boolean       @default(true)
+  transactions Transaction[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 }

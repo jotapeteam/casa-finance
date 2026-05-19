@@ -8,6 +8,7 @@ const transactionsRouter = require('./src/routes/transactions');
 const summaryRouter = require('./src/routes/summary');
 const authRouter = require('./src/routes/auth');
 const authMiddleware = require('./src/middleware/auth');
+const recurringRouter = require('./src/routes/recurring');
 
 const app = express();
 const prisma = new PrismaClient();
@@ -19,6 +20,7 @@ app.use(express.json());
 app.use('/api/auth', authRouter);
 app.use('/api/transactions', authMiddleware, transactionsRouter);
 app.use('/api/summary', authMiddleware, summaryRouter);
+app.use('/api/recurring', authMiddleware, recurringRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
