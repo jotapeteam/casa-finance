@@ -1,15 +1,17 @@
 -- CreateTable
 CREATE TABLE "Transaction" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "date" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "amount" REAL NOT NULL,
+    "id" SERIAL NOT NULL,
+    "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "amount" DOUBLE PRECISION NOT NULL,
     "description" TEXT NOT NULL,
     "category" TEXT NOT NULL,
     "person" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "source" TEXT NOT NULL DEFAULT 'web',
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Transaction_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
