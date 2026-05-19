@@ -1,6 +1,25 @@
 import axios from 'axios';
 
-const api = axios.create({ baseURL: '/api' });
+const BASE_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api';
+
+const api = axios.create({ baseURL: BASE_URL });
+
+api.interceptors.request.use(config => {
+  const token = localStorage.getItem('cf_token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+api.interceptors.response.use(
+  r => r,
+  err => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem('cf_token');
+      window.location.reload();
+    }
+    return Promise.reject(err);
+  }
+);
 
 export const getTransactions = (params) => api.get('/transactions', { params }).then(r => r.data);
 export const createTransaction = (data) => api.post('/transactions', data).then(r => r.data);
