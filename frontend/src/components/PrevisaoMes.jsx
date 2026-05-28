@@ -7,14 +7,14 @@ function formatCurrency(v) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 }
 
-export default function PrevisaoMes({ month, year, onConfirmed }) {
+export default function PrevisaoMes({ month, year, onConfirmed, context = 'casa' }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   async function load() {
     setLoading(true);
     try {
-      const res = await getRecurringPreview({ month, year });
+      const res = await getRecurringPreview({ month, year, context });
       setData(res);
     } catch {
       setData(null);

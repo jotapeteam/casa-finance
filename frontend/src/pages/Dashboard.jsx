@@ -155,8 +155,8 @@ export default function Dashboard({ context = 'casa' }) {
         </div>
       )}
 
-      {/* Previsão de gastos fixos — só no contexto casa */}
-      {context === 'casa' && <PrevisaoMes month={month} year={year} onConfirmed={load} />}
+      {/* Previsão de gastos fixos */}
+      <PrevisaoMes month={month} year={year} onConfirmed={load} context={context} />
 
       {/* Tabela */}
       <TransactionTable transactions={transactions} onEdit={openEdit} onDelete={handleDelete} />

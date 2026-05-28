@@ -7,6 +7,7 @@ const TABS = [
   { id: 'dashboard', label: '🏠 Dashboard Casa' },
   { id: 'fixos', label: '📅 Gastos Fixos Casa' },
   { id: 'empresa', label: '💼 Dashboard Empresa' },
+  { id: 'fixos-empresa', label: '📋 Gastos Fixos Empresa' },
 ];
 
 export default function App() {
@@ -59,8 +60,9 @@ export default function App() {
 
       <main className="max-w-7xl mx-auto px-4 py-6">
         {activeTab === 'dashboard' && <Dashboard context="casa" />}
-        {activeTab === 'fixos' && <GastosFixos />}
+        {activeTab === 'fixos' && <GastosFixos context="casa" />}
         {activeTab === 'empresa' && <Dashboard context="empresa" />}
+        {activeTab === 'fixos-empresa' && <GastosFixos context="empresa" />}
       </main>
     </div>
   );

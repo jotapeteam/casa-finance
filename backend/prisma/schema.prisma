@@ -36,6 +36,7 @@ model RecurringExpense {
   person       String
   dayOfMonth   Int
   active       Boolean       @default(true)
+  context      String        @default("casa")
   transactions Transaction[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt

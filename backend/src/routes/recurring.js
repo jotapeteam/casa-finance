@@ -7,7 +7,9 @@ const prisma = new PrismaClient();
 // Lista todos os gastos fixos
 router.get('/', async (req, res) => {
   try {
+    const context = req.query.context || 'casa';
     const recurring = await prisma.recurringExpense.findMany({
+      where: { context },
       orderBy: { dayOfMonth: 'asc' },
     });
     res.json(recurring);
@@ -22,12 +24,13 @@ router.get('/preview', async (req, res) => {
     const now = new Date();
     const month = Number(req.query.month) || now.getMonth() + 1;
     const year = Number(req.query.year) || now.getFullYear();
+    const context = req.query.context || 'casa';
 
     const start = new Date(year, month - 1, 1);
     const end = new Date(year, month, 1);
 
     const recurring = await prisma.recurringExpense.findMany({
-      where: { active: true },
+      where: { active: true, context },
       orderBy: { dayOfMonth: 'asc' },
     });
 
@@ -61,12 +64,12 @@ router.get('/preview', async (req, res) => {
 // Cria novo gasto fixo
 router.post('/', async (req, res) => {
   try {
-    const { description, amount, category, person, dayOfMonth } = req.body;
+    const { description, amount, category, person, dayOfMonth, context } = req.body;
     if (!description || !amount || !category || !person || !dayOfMonth) {
       return res.status(400).json({ error: 'Campos obrigatórios faltando' });
     }
     const r = await prisma.recurringExpense.create({
-      data: { description, amount: Number(amount), category, person, dayOfMonth: Number(dayOfMonth) },
+      data: { description, amount: Number(amount), category, person, dayOfMonth: Number(dayOfMonth), context: context || 'casa' },
     });
     res.status(201).json(r);
   } catch (e) {
@@ -126,6 +129,7 @@ router.post('/:id/confirm', async (req, res) => {
         person: recurring.person,
         type: 'gasto',
         source: 'web',
+        context: recurring.context || 'casa',
         date: new Date(year, month - 1, day),
         recurringExpenseId: recurring.id,
       },

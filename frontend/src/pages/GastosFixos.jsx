@@ -1,20 +1,27 @@
 import { useState, useEffect } from 'react';
 import { getRecurring, createRecurring, updateRecurring, deleteRecurring } from '../api.js';
 
-const CATEGORIES = [
+const CATEGORIES_CASA = [
   '🛒 Supermercado', '⛽ Gasolina / Combustível', '💊 Farmácia',
   '🍽️ Restaurante / Delivery', '🏠 Casa', '💡 Contas',
   '👕 Vestuário', '🏥 Saúde', '🎓 Educação',
   '🎬 Lazer / Entretenimento', '📦 Outros',
 ];
 
+const CATEGORIES_EMPRESA = [
+  '💰 Receita JOTAPE', '💰 Receita Carol',
+  '🔧 Ferramentas', '🏛️ Imposto', '📊 Contadora',
+  '👩‍💼 Colaboradora', '📣 Tráfego', '📈 Investimentos',
+];
+
 function formatCurrency(v) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 }
 
-const EMPTY = { description: '', amount: '', category: '💡 Contas', person: 'JOTAPE', dayOfMonth: 1, active: true };
+export default function GastosFixos({ context = 'casa' }) {
+  const CATEGORIES = context === 'empresa' ? CATEGORIES_EMPRESA : CATEGORIES_CASA;
+  const EMPTY = { description: '', amount: '', category: CATEGORIES[context === 'empresa' ? 2 : 4], person: 'JOTAPE', dayOfMonth: 1, active: true };
 
-export default function GastosFixos() {
   const [list, setList] = useState([]);
   const [form, setForm] = useState(EMPTY);
   const [editingId, setEditingId] = useState(null);
@@ -23,7 +30,7 @@ export default function GastosFixos() {
 
   async function load() {
     setLoading(true);
-    const data = await getRecurring();
+    const data = await getRecurring(context);
     setList(data);
     setLoading(false);
   }
@@ -48,7 +55,7 @@ export default function GastosFixos() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const data = { ...form, amount: parseFloat(String(form.amount).replace(',', '.')) };
+    const data = { ...form, amount: parseFloat(String(form.amount).replace(',', '.')), context };
     if (editingId) {
       await updateRecurring(editingId, data);
     } else {
@@ -76,8 +83,8 @@ export default function GastosFixos() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Gastos Fixos</h2>
-          <p className="text-sm text-gray-500">Despesas recorrentes mensais</p>
+          <h2 className="text-xl font-bold text-gray-900">{context === 'empresa' ? '💼 Gastos Fixos Empresa' : '🏠 Gastos Fixos Casa'}</h2>
+          <p className="text-sm text-gray-500">{context === 'empresa' ? 'Assinaturas e mensalidades da empresa' : 'Despesas recorrentes mensais'}</p>
         </div>
         <button className="btn-primary" onClick={openNew}>+ Novo Gasto Fixo</button>
       </div>
