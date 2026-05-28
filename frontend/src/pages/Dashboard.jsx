@@ -167,6 +167,7 @@ export default function Dashboard({ context = 'casa' }) {
           transaction={editingTx}
           onClose={() => { setModalOpen(false); setEditingTx(null); }}
           onSave={handleSave}
+          context={context}
         />
       )}
     </div>

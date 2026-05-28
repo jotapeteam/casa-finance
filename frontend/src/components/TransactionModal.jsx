@@ -1,21 +1,28 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 
-const CATEGORIES = [
+const CATEGORIES_CASA = [
   '🛒 Supermercado', '⛽ Gasolina / Combustível', '💊 Farmácia',
   '🍽️ Restaurante / Delivery', '🏠 Casa', '💡 Contas',
   '👕 Vestuário', '🏥 Saúde', '🎓 Educação',
   '🎬 Lazer / Entretenimento', '💰 Receita JOTAPE', '💰 Receita Carol', '📦 Outros',
 ];
 
-export default function TransactionModal({ transaction, onClose, onSave }) {
+const CATEGORIES_EMPRESA = [
+  '💰 Receita JOTAPE', '💰 Receita Carol',
+  '🔧 Ferramentas', '🏛️ Imposto', '📊 Contadora',
+  '👩‍💼 Colaboradora', '📣 Tráfego', '📈 Investimentos',
+];
+
+export default function TransactionModal({ transaction, onClose, onSave, context = 'casa' }) {
   const isEdit = !!transaction?.id;
+  const CATEGORIES = context === 'empresa' ? CATEGORIES_EMPRESA : CATEGORIES_CASA;
 
   const [form, setForm] = useState({
     amount: '',
     description: '',
     category: CATEGORIES[0],
-    type: 'gasto',
+    type: context === 'empresa' ? 'receita' : 'gasto',
     person: 'JOTAPE',
     date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
   });
