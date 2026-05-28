@@ -23,7 +23,7 @@ function SummaryCard({ label, value, color, icon }) {
   );
 }
 
-export default function Dashboard() {
+export default function Dashboard({ context = 'casa' }) {
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
@@ -42,9 +42,9 @@ export default function Dashboard() {
     setLoading(true);
     try {
       const [sum, txData, evo] = await Promise.all([
-        getSummary({ month, year }),
-        getTransactions({ month, year, person: filterPerson || undefined, type: filterType || undefined, limit: 500 }),
-        getMonthlyEvolution(),
+        getSummary({ month, year, context }),
+        getTransactions({ month, year, person: filterPerson || undefined, type: filterType || undefined, context, limit: 500 }),
+        getMonthlyEvolution(context),
       ]);
       setSummary(sum);
       setTransactions(txData.transactions);
@@ -63,7 +63,7 @@ export default function Dashboard() {
       if (editingTx?.id) {
         await updateTransaction(editingTx.id, data);
       } else {
-        await createTransaction(data);
+        await createTransaction({ ...data, context });
       }
       setModalOpen(false);
       setEditingTx(null);
@@ -155,8 +155,8 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Previsão de gastos fixos */}
-      <PrevisaoMes month={month} year={year} onConfirmed={load} />
+      {/* Previsão de gastos fixos — só no contexto casa */}
+      {context === 'casa' && <PrevisaoMes month={month} year={year} onConfirmed={load} />}
 
       {/* Tabela */}
       <TransactionTable transactions={transactions} onEdit={openEdit} onDelete={handleDelete} />

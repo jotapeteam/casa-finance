@@ -51,7 +51,7 @@ function parseMessage(text, defaultPerson) {
   return { amount, description, type, person };
 }
 
-async function createTransaction({ amount, description, type, person, source = 'web', date }) {
+async function createTransaction({ amount, description, type, person, source = 'web', date, context = 'casa' }) {
   const category = await detectCategory(description, type, person);
 
   return prisma.transaction.create({
@@ -62,6 +62,7 @@ async function createTransaction({ amount, description, type, person, source = '
       person,
       type,
       source,
+      context,
       date: date ? new Date(date) : new Date(),
     },
   });
@@ -72,15 +73,15 @@ async function processMessageAndCreate(text, telegramId) {
   const parsed = parseMessage(text, person);
   if (!parsed) return null;
 
-  return createTransaction({ ...parsed, source: 'telegram' });
+  return createTransaction({ ...parsed, source: 'telegram', context: 'casa' });
 }
 
-async function getMonthSummary(year, month) {
+async function getMonthSummary(year, month, context = 'casa') {
   const start = new Date(year, month - 1, 1);
   const end = new Date(year, month, 1);
 
   const transactions = await prisma.transaction.findMany({
-    where: { date: { gte: start, lt: end } },
+    where: { date: { gte: start, lt: end }, context },
     orderBy: { date: 'desc' },
   });
 
@@ -109,7 +110,7 @@ async function getTodayTransactions() {
   end.setHours(23, 59, 59, 999);
 
   return prisma.transaction.findMany({
-    where: { date: { gte: start, lte: end } },
+    where: { date: { gte: start, lte: end }, context: 'casa' },
     orderBy: { date: 'desc' },
   });
 }

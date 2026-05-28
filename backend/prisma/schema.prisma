@@ -16,6 +16,7 @@ model Transaction {
   person             String
   type               String
   source             String           @default("web")
+  context            String           @default("casa")
   recurringExpenseId Int?
   recurringExpense   RecurringExpense? @relation(fields: [recurringExpenseId], references: [id])
   createdAt          DateTime         @default(now())

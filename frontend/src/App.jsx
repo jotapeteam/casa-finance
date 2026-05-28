@@ -4,8 +4,9 @@ import GastosFixos from './pages/GastosFixos.jsx';
 import Login from './pages/Login.jsx';
 
 const TABS = [
-  { id: 'dashboard', label: '📊 Dashboard' },
-  { id: 'fixos', label: '📅 Gastos Fixos' },
+  { id: 'dashboard', label: '🏠 Dashboard Casa' },
+  { id: 'fixos', label: '📅 Gastos Fixos Casa' },
+  { id: 'empresa', label: '💼 Dashboard Empresa' },
 ];
 
 export default function App() {
@@ -57,8 +58,9 @@ export default function App() {
       </div>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
-        {activeTab === 'dashboard' && <Dashboard />}
+        {activeTab === 'dashboard' && <Dashboard context="casa" />}
         {activeTab === 'fixos' && <GastosFixos />}
+        {activeTab === 'empresa' && <Dashboard context="empresa" />}
       </main>
     </div>
   );

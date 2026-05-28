@@ -26,7 +26,7 @@ export const createTransaction = (data) => api.post('/transactions', data).then(
 export const updateTransaction = (id, data) => api.put(`/transactions/${id}`, data).then(r => r.data);
 export const deleteTransaction = (id) => api.delete(`/transactions/${id}`).then(r => r.data);
 export const getSummary = (params) => api.get('/summary', { params }).then(r => r.data);
-export const getMonthlyEvolution = () => api.get('/summary/monthly-evolution').then(r => r.data);
+export const getMonthlyEvolution = (context = 'casa') => api.get('/summary/monthly-evolution', { params: { context } }).then(r => r.data);
 
 export const getRecurring = () => api.get('/recurring').then(r => r.data);
 export const getRecurringPreview = (params) => api.get('/recurring/preview', { params }).then(r => r.data);
