@@ -5,7 +5,8 @@ const CATEGORIES_CASA = [
   '🛒 Supermercado', '⛽ Gasolina / Combustível', '💊 Farmácia',
   '🍽️ Restaurante / Delivery', '🏠 Casa', '💡 Contas',
   '👕 Vestuário', '🏥 Saúde', '🎓 Educação',
-  '🎬 Lazer / Entretenimento', '📦 Outros',
+  '🎬 Lazer / Entretenimento', '🚗 Carro', '💅 Estética Pessoal',
+  '🐾 Pets', '📦 Outros',
 ];
 
 const CATEGORIES_EMPRESA = [
