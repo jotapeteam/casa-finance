@@ -34,3 +34,14 @@ export const createRecurring = (data) => api.post('/recurring', data).then(r => 
 export const updateRecurring = (id, data) => api.put(`/recurring/${id}`, data).then(r => r.data);
 export const deleteRecurring = (id) => api.delete(`/recurring/${id}`).then(r => r.data);
 export const confirmRecurring = (id, params) => api.post(`/recurring/${id}/confirm`, null, { params }).then(r => r.data);
+
+// Clients (Agência Criativamente)
+export const getClients = () => api.get('/clients').then(r => r.data);
+export const getClientsForecast = (months = 4) => api.get('/clients/forecast', { params: { months } }).then(r => r.data);
+export const createClient = (data) => api.post('/clients', data).then(r => r.data);
+export const updateClient = (id, data) => api.put(`/clients/${id}`, data).then(r => r.data);
+export const deleteClient = (id) => api.delete(`/clients/${id}`).then(r => r.data);
+export const confirmClientPayment = (clientId, paymentId) => api.post(`/clients/${clientId}/payments/${paymentId}/confirm`).then(r => r.data);
+export const unconfirmClientPayment = (clientId, paymentId) => api.post(`/clients/${clientId}/payments/${paymentId}/unconfirm`).then(r => r.data);
+export const updateClientPayment = (clientId, paymentId, data) => api.put(`/clients/${clientId}/payments/${paymentId}`, data).then(r => r.data);
+export const addClientPayments = (clientId, installments) => api.post(`/clients/${clientId}/payments`, { installments }).then(r => r.data);

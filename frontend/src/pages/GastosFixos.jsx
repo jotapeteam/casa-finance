@@ -15,13 +15,19 @@ const CATEGORIES_EMPRESA = [
   '👩‍💼 Colaboradora', '📣 Tráfego', '📈 Investimentos',
 ];
 
+const CATEGORIES_AGENCIA = [
+  '👤 Creators', '👩‍💼 Colaboradoras', '🔧 Ferramentas',
+  '⚖️ Advogados', '🏛️ Imposto', '📊 Contadora', '📦 Outros',
+];
+
 function formatCurrency(v) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 }
 
 export default function GastosFixos({ context = 'casa' }) {
-  const CATEGORIES = context === 'empresa' ? CATEGORIES_EMPRESA : CATEGORIES_CASA;
-  const EMPTY = { description: '', amount: '', category: CATEGORIES[context === 'empresa' ? 2 : 4], person: 'JOTAPE', dayOfMonth: 1, active: true };
+  const CATEGORIES = context === 'agencia' ? CATEGORIES_AGENCIA : context === 'empresa' ? CATEGORIES_EMPRESA : CATEGORIES_CASA;
+  const defaultPerson = context === 'agencia' ? 'Criativamente' : 'JOTAPE';
+  const EMPTY = { description: '', amount: '', category: CATEGORIES[0], person: defaultPerson, dayOfMonth: 1, active: true };
 
   const [list, setList] = useState([]);
   const [form, setForm] = useState(EMPTY);
@@ -84,8 +90,12 @@ export default function GastosFixos({ context = 'casa' }) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">{context === 'empresa' ? '💼 Gastos Fixos Empresa' : '🏠 Gastos Fixos Casa'}</h2>
-          <p className="text-sm text-gray-500">{context === 'empresa' ? 'Assinaturas e mensalidades da empresa' : 'Despesas recorrentes mensais'}</p>
+          <h2 className="text-xl font-bold text-gray-900">
+            {context === 'agencia' ? '🎨 Gastos Fixos Agência' : context === 'empresa' ? '💼 Gastos Fixos Empresa' : '🏠 Gastos Fixos Casa'}
+          </h2>
+          <p className="text-sm text-gray-500">
+            {context === 'agencia' ? 'Despesas fixas da Criativamente' : context === 'empresa' ? 'Assinaturas e mensalidades da empresa' : 'Despesas recorrentes mensais'}
+          </p>
         </div>
         <button className="btn-primary" onClick={openNew}>+ Novo Gasto Fixo</button>
       </div>
@@ -122,17 +132,19 @@ export default function GastosFixos({ context = 'casa' }) {
                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
-            <div>
-              <label className="label">Responsável</label>
-              <div className="flex gap-2">
-                {['JOTAPE', 'Carol'].map(p => (
-                  <button key={p} type="button" onClick={() => set('person', p)}
-                    className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${form.person === p ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
-                    {p}
-                  </button>
-                ))}
+            {context !== 'agencia' && (
+              <div>
+                <label className="label">Responsável</label>
+                <div className="flex gap-2">
+                  {['JOTAPE', 'Carol'].map(p => (
+                    <button key={p} type="button" onClick={() => set('person', p)}
+                      className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${form.person === p ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                      {p}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
             <div className="sm:col-span-2 flex gap-3 pt-2">
               <button type="button" onClick={() => setShowForm(false)} className="btn-ghost flex-1">Cancelar</button>
               <button type="submit" className="btn-primary flex-1">{editingId ? 'Salvar' : 'Cadastrar'}</button>

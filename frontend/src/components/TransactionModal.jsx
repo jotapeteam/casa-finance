@@ -15,16 +15,31 @@ const CATEGORIES_EMPRESA = [
   '👩‍💼 Colaboradora', '📣 Tráfego', '📈 Investimentos',
 ];
 
+const CATEGORIES_AGENCIA_GASTO = [
+  '👤 Creators', '👩‍💼 Colaboradoras', '🔧 Ferramentas',
+  '⚖️ Advogados', '🏛️ Imposto', '📊 Contadora', '📦 Outros',
+];
+
+const CATEGORIES_AGENCIA_RECEITA = ['💰 Receita de Clientes'];
+
 export default function TransactionModal({ transaction, onClose, onSave, context = 'casa' }) {
   const isEdit = !!transaction?.id;
-  const CATEGORIES = context === 'empresa' ? CATEGORIES_EMPRESA : CATEGORIES_CASA;
+  const isAgencia = context === 'agencia';
+
+  function getCategoriesByType(type) {
+    if (isAgencia) return type === 'receita' ? CATEGORIES_AGENCIA_RECEITA : CATEGORIES_AGENCIA_GASTO;
+    if (context === 'empresa') return CATEGORIES_EMPRESA;
+    return CATEGORIES_CASA;
+  }
+
+  const CATEGORIES = getCategoriesByType('gasto');
 
   const [form, setForm] = useState({
     amount: '',
     description: '',
     category: CATEGORIES[0],
-    type: context === 'empresa' ? 'receita' : 'gasto',
-    person: 'JOTAPE',
+    type: isAgencia ? 'gasto' : context === 'empresa' ? 'receita' : 'gasto',
+    person: isAgencia ? 'Criativamente' : 'JOTAPE',
     date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
   });
 
@@ -33,9 +48,9 @@ export default function TransactionModal({ transaction, onClose, onSave, context
       setForm({
         amount: transaction.amount || '',
         description: transaction.description || '',
-        category: transaction.category || CATEGORIES[0],
+        category: transaction.category || getCategoriesByType(transaction.type || 'gasto')[0],
         type: transaction.type || 'gasto',
-        person: transaction.person || 'JOTAPE',
+        person: transaction.person || (isAgencia ? 'Criativamente' : 'JOTAPE'),
         date: transaction.date
           ? format(new Date(transaction.date), "yyyy-MM-dd'T'HH:mm")
           : format(new Date(), "yyyy-MM-dd'T'HH:mm"),
@@ -44,8 +59,15 @@ export default function TransactionModal({ transaction, onClose, onSave, context
   }, [transaction]);
 
   function set(field, value) {
-    setForm(f => ({ ...f, [field]: value }));
+    if (field === 'type' && isAgencia) {
+      const cats = getCategoriesByType(value);
+      setForm(f => ({ ...f, type: value, category: cats[0] }));
+    } else {
+      setForm(f => ({ ...f, [field]: value }));
+    }
   }
+
+  const activeCategories = getCategoriesByType(form.type);
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -83,29 +105,31 @@ export default function TransactionModal({ transaction, onClose, onSave, context
 
           <div>
             <label className="label">Descrição</label>
-            <input className="input" type="text" placeholder="Ex: Compras no mercado"
+            <input className="input" type="text" placeholder={isAgencia ? 'Ex: Pagamento creators campanha X' : 'Ex: Compras no mercado'}
               value={form.description} onChange={e => set('description', e.target.value)} required />
           </div>
 
           <div>
             <label className="label">Categoria</label>
             <select className="input" value={form.category} onChange={e => set('category', e.target.value)}>
-              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              {activeCategories.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
 
-          <div>
-            <label className="label">Quem pagou</label>
-            <div className="flex gap-3">
-              {['JOTAPE', 'Carol'].map(p => (
-                <button key={p} type="button"
-                  onClick={() => set('person', p)}
-                  className={`flex-1 py-2 rounded-lg font-semibold text-sm transition-colors ${form.person === p ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
-                  {p}
-                </button>
-              ))}
+          {!isAgencia && (
+            <div>
+              <label className="label">Quem pagou</label>
+              <div className="flex gap-3">
+                {['JOTAPE', 'Carol'].map(p => (
+                  <button key={p} type="button"
+                    onClick={() => set('person', p)}
+                    className={`flex-1 py-2 rounded-lg font-semibold text-sm transition-colors ${form.person === p ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                    {p}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           <div>
             <label className="label">Data e hora</label>
