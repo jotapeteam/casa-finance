@@ -51,7 +51,7 @@ export default function PrevisaoAgencia({ month, year, onRefresh }) {
     <div className="space-y-4">
       {/* Previsão de receita de clientes */}
       {revForecast.length > 0 && (
-        <div className="card border-l-4 border-purple-400">
+        <div className="card border-l-4 border-[#c45825]">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-lg font-bold text-gray-800">💜 Previsão de Receitas — Clientes</h2>
@@ -59,7 +59,7 @@ export default function PrevisaoAgencia({ month, year, onRefresh }) {
             </div>
             <div className="text-right text-sm">
               <p className="text-gray-500">Total previsto</p>
-              <p className="font-bold text-purple-600 text-lg">
+              <p className="font-bold text-[#c45825] text-lg">
                 {fmt(revForecast.reduce((s, m) => s + m.total, 0))}
               </p>
             </div>
@@ -70,20 +70,20 @@ export default function PrevisaoAgencia({ month, year, onRefresh }) {
               <div key={monthGroup.key}>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm font-semibold text-gray-700 capitalize">{monthGroup.label}</p>
-                  <span className="text-sm font-bold text-purple-600">{fmt(monthGroup.total)}</span>
+                  <span className="text-sm font-bold text-[#c45825]">{fmt(monthGroup.total)}</span>
                 </div>
                 <div className="space-y-1.5 pl-2">
                   {monthGroup.payments.map(p => (
-                    <div key={p.id} className="flex items-center justify-between bg-purple-50 rounded-xl px-3 py-2">
+                    <div key={p.id} className="flex items-center justify-between bg-orange-50 rounded-xl px-3 py-2">
                       <div>
                         <p className="text-sm font-medium text-gray-800">{p.client.name}</p>
                         <p className="text-xs text-gray-500">{p.description} · vence {new Date(p.dueDate).toLocaleDateString('pt-BR')}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm text-purple-700">{fmt(p.amount)}</span>
+                        <span className="font-semibold text-sm text-[#c45825]">{fmt(p.amount)}</span>
                         <button
                           onClick={() => handleConfirmPayment(p.clientId, p.id)}
-                          className="text-xs bg-purple-600 text-white px-3 py-1 rounded-full hover:bg-purple-700 transition-colors">
+                          className="text-xs text-white px-3 py-1 rounded-full hover:opacity-90 transition-opacity" style={{ background: 'linear-gradient(135deg, #0d1b3e, #c45825)' }}>
                           Recebido
                         </button>
                       </div>

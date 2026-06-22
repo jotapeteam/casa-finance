@@ -43,7 +43,7 @@ function PaymentRow({ payment, clientId, onRefresh }) {
         </div>
       </div>
       <div className="flex items-center gap-3">
-        <span className="font-semibold text-purple-700">{fmt(payment.amount)}</span>
+        <span className="font-semibold text-[#c45825]">{fmt(payment.amount)}</span>
         {payment.paid ? (
           <button onClick={toggle} disabled={confirming}
             className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full hover:bg-red-100 hover:text-red-600 transition-colors">
@@ -51,7 +51,8 @@ function PaymentRow({ payment, clientId, onRefresh }) {
           </button>
         ) : (
           <button onClick={toggle} disabled={confirming}
-            className={`text-xs px-3 py-1 rounded-full font-medium transition-colors ${isToday ? 'bg-yellow-500 text-white hover:bg-yellow-600' : isPast ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-purple-100 text-purple-700 hover:bg-purple-200'}`}>
+            style={!isToday && !isPast ? { background: 'linear-gradient(135deg, #0d1b3e, #1a2d5a)', color: 'white' } : {}}
+            className={`text-xs px-3 py-1 rounded-full font-medium transition-all ${isToday ? 'bg-yellow-500 text-white hover:bg-yellow-600' : isPast ? 'bg-red-500 text-white hover:bg-red-600' : 'hover:opacity-90'}`}>
             {confirming ? '...' : isToday ? '⚡ Receber hoje' : isPast ? '⚠️ Receber' : 'Confirmar recebimento'}
           </button>
         )}
@@ -92,14 +93,14 @@ function ClientCard({ client, onRefresh, onDelete }) {
   }
 
   return (
-    <div className={`card border-2 transition-colors ${client.status === 'active' ? 'border-purple-100' : 'border-gray-100 opacity-75'}`}>
+    <div className={`card border-2 transition-colors ${client.status === 'active' ? 'border-orange-200' : 'border-gray-100 opacity-75'}`}>
       {/* Header do cliente */}
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
             <h3 className="font-bold text-gray-900 text-lg">{client.name}</h3>
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusInfo.color}`}>{statusInfo.label}</span>
-            <span className="text-xs px-2 py-0.5 bg-purple-50 text-purple-600 rounded-full">
+            <span className="text-xs px-2 py-0.5 bg-orange-50 text-orange-600 rounded-full">
               {client.contractType === 'monthly' ? '🔄 Mensalidade' : '📅 Parcelas'}
             </span>
           </div>
@@ -112,7 +113,7 @@ function ClientCard({ client, onRefresh, onDelete }) {
               <span>Total: {fmt(total)}</span>
             </div>
             <div className="w-full bg-gray-100 rounded-full h-1.5">
-              <div className="bg-purple-500 h-1.5 rounded-full transition-all" style={{ width: `${pct}%` }} />
+              <div className="h-1.5 rounded-full transition-all" style={{ background: 'linear-gradient(90deg, #0d1b3e, #c45825)', width: `${pct}%` }} />
             </div>
           </div>
 
@@ -158,7 +159,7 @@ function ClientCard({ client, onRefresh, onDelete }) {
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-semibold text-gray-700">Cronograma de pagamentos</p>
             <button onClick={() => setAddingPayments(!addingPayments)}
-              className="text-xs text-purple-600 hover:underline">+ Adicionar parcelas</button>
+              className="text-xs text-orange-600 hover:underline">+ Adicionar parcelas</button>
           </div>
 
           {client.payments.map(p => (
@@ -195,7 +196,7 @@ function ClientCard({ client, onRefresh, onDelete }) {
                 <button type="button" onClick={() => setNewPayments(prev => [...prev, { amount: '', dueDate: '', description: '' }])}
                   className="btn-ghost text-xs flex-1">+ Linha</button>
                 <button type="button" onClick={() => setAddingPayments(false)} className="btn-ghost text-xs flex-1">Cancelar</button>
-                <button type="submit" className="bg-purple-600 text-white text-xs py-1.5 px-3 rounded-lg hover:bg-purple-700 flex-1">Salvar</button>
+                <button type="submit" className="text-white text-xs py-1.5 px-3 rounded-lg hover:opacity-90 flex-1" style={{ background: 'linear-gradient(135deg, #0d1b3e, #c45825)' }}>Salvar</button>
               </div>
             </form>
           )}
@@ -252,17 +253,16 @@ export default function AgenciaClientes() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-purple-400 rounded-2xl p-5 text-white">
+      <div className="rounded-2xl p-6 text-white overflow-hidden relative" style={{ background: 'linear-gradient(135deg, #0d1b3e 0%, #1a2d5a 50%, #c45825 100%)' }}>
+        <div className="absolute top-2 right-8 text-white/10 text-8xl font-black select-none" style={{ fontFamily: 'serif' }}>✦</div>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">👥</span>
-            <div>
-              <h1 className="text-xl font-bold">Clientes</h1>
-              <p className="text-purple-100 text-sm">Contratos e recebimentos — Criativamente</p>
-            </div>
+          <div>
+            <p className="text-xs tracking-[0.2em] text-white/50 uppercase mb-2">✦ Criativamente</p>
+            <h1 className="text-xl font-bold">Clientes</h1>
+            <p className="text-white/60 text-sm mt-0.5">Contratos e recebimentos</p>
           </div>
           <button onClick={() => setModalOpen(true)}
-            className="bg-white text-purple-700 font-semibold text-sm py-2 px-4 rounded-xl hover:bg-purple-50 transition-colors">
+            className="bg-white/15 hover:bg-white/25 text-white border border-white/30 font-semibold text-sm py-2 px-4 rounded-xl transition-all backdrop-blur-sm">
             + Novo Cliente
           </button>
         </div>
@@ -271,7 +271,7 @@ export default function AgenciaClientes() {
       {/* Cards de resumo */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="card flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-2xl">👥</div>
+          <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-2xl">👥</div>
           <div>
             <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Clientes ativos</p>
             <p className="text-2xl font-bold text-gray-900">{clients.filter(c => c.status === 'active').length}</p>
@@ -302,7 +302,8 @@ export default function AgenciaClientes() {
           { key: 'all', label: 'Todos' },
         ].map(f => (
           <button key={f.key} onClick={() => setFilter(f.key)}
-            className={`text-sm px-4 py-1.5 rounded-full font-medium transition-colors ${filter === f.key ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+            style={filter === f.key ? { background: 'linear-gradient(135deg, #0d1b3e, #c45825)', color: 'white' } : {}}
+            className={`text-sm px-4 py-1.5 rounded-full font-medium transition-all ${filter === f.key ? '' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
             {f.label}
           </button>
         ))}

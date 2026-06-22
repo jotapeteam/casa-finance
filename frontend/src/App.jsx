@@ -52,47 +52,56 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className={`border-b border-gray-200 px-6 py-4 flex items-center justify-between transition-colors ${isAgencia ? 'bg-purple-700' : 'bg-white'}`}>
+      <header
+        style={isAgencia ? { background: 'linear-gradient(135deg, #0d1b3e 0%, #1a2d5a 60%, #c45825 100%)' } : {}}
+        className={`border-b px-6 py-4 flex items-center justify-between transition-all ${isAgencia ? 'border-[#c45825]/30' : 'border-gray-200 bg-white'}`}>
         <div className="flex items-center gap-3">
-          <span className="text-2xl">{isAgencia ? '🎨' : '🏠'}</span>
-          <div>
-            <h1 className={`text-xl font-bold ${isAgencia ? 'text-white' : 'text-gray-900'}`}>
-              {isAgencia ? 'Criativamente' : 'Casa Finance'}
-            </h1>
-            <p className={`text-xs ${isAgencia ? 'text-purple-200' : 'text-gray-500'}`}>
-              {isAgencia ? 'Agência de criadores de conteúdo' : 'Gestão financeira familiar'}
-            </p>
-          </div>
+          {isAgencia ? (
+            <span className="text-2xl font-bold tracking-widest text-white/90 uppercase" style={{ letterSpacing: '0.15em', fontSize: '11px' }}>
+              ✦ CRIATIVAMENTE
+            </span>
+          ) : (
+            <>
+              <span className="text-2xl">🏠</span>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Casa Finance</h1>
+                <p className="text-xs text-gray-500">Gestão financeira familiar</p>
+              </div>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-3">
-          <div className={`flex items-center gap-2 text-sm ${isAgencia ? 'text-purple-200' : 'text-gray-500'}`}>
+          <div className={`flex items-center gap-2 text-sm ${isAgencia ? 'text-white/60' : 'text-gray-500'}`}>
             <span className="w-2 h-2 rounded-full bg-green-400 inline-block"></span>
             {isAgencia ? 'Criativamente' : 'JOTAPE & Carol'}
           </div>
-          <button onClick={handleLogout} className={`text-xs transition-colors ${isAgencia ? 'text-purple-300 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
+          <button onClick={handleLogout} className={`text-xs transition-colors ${isAgencia ? 'text-white/50 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
             Sair
           </button>
         </div>
       </header>
 
       {/* Grupos de abas */}
-      <div className={`border-b border-gray-200 px-6 ${isAgencia ? 'bg-purple-600' : 'bg-white'}`}>
+      <div
+        style={isAgencia ? { background: 'linear-gradient(135deg, #0a1628 0%, #152244 100%)' } : {}}
+        className={`border-b px-6 ${isAgencia ? 'border-[#c45825]/20' : 'border-gray-200 bg-white'}`}>
         <div className="max-w-7xl mx-auto">
           {/* Seletor de grupo */}
-          <div className={`flex gap-1 pt-2 ${isAgencia ? 'border-b border-purple-500' : 'border-b border-gray-100'}`}>
+          <div className={`flex gap-1 pt-2 ${isAgencia ? 'border-b border-white/10' : 'border-b border-gray-100'}`}>
             {TAB_GROUPS.map(group => {
               const isActiveGroup = activeGroup?.id === group.id;
               return (
                 <button
                   key={group.id}
                   onClick={() => setActiveTab(group.tabs[0].id)}
-                  className={`px-4 py-2 text-sm font-semibold rounded-t-lg transition-colors ${
+                  style={isActiveGroup && group.id === 'agencia' ? { background: 'linear-gradient(135deg, #c45825, #e07a40)', color: 'white' } : {}}
+                  className={`px-4 py-2 text-sm font-semibold rounded-t-lg transition-all ${
                     isActiveGroup
                       ? group.id === 'agencia'
-                        ? 'bg-white text-purple-700'
+                        ? ''
                         : 'bg-blue-600 text-white'
                       : isAgencia
-                        ? 'text-purple-200 hover:text-white'
+                        ? 'text-white/40 hover:text-white/80'
                         : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                   }`}>
                   {group.label}
@@ -108,10 +117,10 @@ export default function App() {
                 className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
                   activeTab === tab.id
                     ? isAgencia
-                      ? 'border-white text-white'
+                      ? 'border-[#c45825] text-[#e07a40]'
                       : 'border-blue-600 text-blue-600'
                     : isAgencia
-                      ? 'border-transparent text-purple-200 hover:text-white'
+                      ? 'border-transparent text-white/50 hover:text-white/80'
                       : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}>
                 {tab.label}

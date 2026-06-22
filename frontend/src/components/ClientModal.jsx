@@ -97,11 +97,11 @@ export default function ClientModal({ onClose, onSave }) {
               <label className="label">Tipo de contrato</label>
               <div className="flex gap-3">
                 <button type="button" onClick={() => setContractType('monthly')}
-                  className={`flex-1 py-3 rounded-xl font-semibold text-sm transition-colors border-2 ${contractType === 'monthly' ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-gray-200 text-gray-600'}`}>
+                  className={`flex-1 py-3 rounded-xl font-semibold text-sm transition-colors border-2 ${contractType === 'monthly' ? 'border-[#c45825] bg-orange-50 text-[#c45825]' : 'border-gray-200 text-gray-600'}`}>
                   🔄 Mensalidade fixa
                 </button>
                 <button type="button" onClick={() => setContractType('installments')}
-                  className={`flex-1 py-3 rounded-xl font-semibold text-sm transition-colors border-2 ${contractType === 'installments' ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-gray-200 text-gray-600'}`}>
+                  className={`flex-1 py-3 rounded-xl font-semibold text-sm transition-colors border-2 ${contractType === 'installments' ? 'border-[#c45825] bg-orange-50 text-[#c45825]' : 'border-gray-200 text-gray-600'}`}>
                   📅 Parcelas
                 </button>
               </div>
@@ -124,9 +124,9 @@ export default function ClientModal({ onClose, onSave }) {
                   <input className="input" type="date" value={startDate} onChange={e => setStartDate(e.target.value)} required />
                 </div>
                 {monthlyAmount && startDate && (
-                  <div className="bg-purple-50 rounded-xl p-3 text-sm text-purple-700">
+                  <div className="bg-orange-50 rounded-xl p-3 text-sm text-[#c45825]">
                     <p>Total previsto: <strong>R$ {(parseFloat(monthlyAmount) * numberOfMonths).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></p>
-                    <p className="text-xs mt-0.5 text-purple-500">Geração de {numberOfMonths} parcelas mensais a partir de {startDate ? new Date(startDate + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}</p>
+                    <p className="text-xs mt-0.5 text-orange-400">Geração de {numberOfMonths} parcelas mensais a partir de {startDate ? new Date(startDate + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}</p>
                   </div>
                 )}
               </>
@@ -135,7 +135,7 @@ export default function ClientModal({ onClose, onSave }) {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <label className="label mb-0">Parcelas do contrato</label>
-                    <button type="button" onClick={autoFillDescriptions} className="text-xs text-purple-600 hover:underline">Auto-preencher descrições</button>
+                    <button type="button" onClick={autoFillDescriptions} className="text-xs text-[#c45825] hover:underline">Auto-preencher descrições</button>
                   </div>
                   {installments.map((inst, idx) => (
                     <div key={idx} className="grid grid-cols-12 gap-2 items-start">
@@ -160,7 +160,7 @@ export default function ClientModal({ onClose, onSave }) {
                   ))}
                   <button type="button" onClick={addInstallment} className="btn-ghost w-full text-sm">+ Adicionar parcela</button>
                   {totalInstallments > 0 && (
-                    <div className="bg-purple-50 rounded-xl p-3 text-sm text-purple-700">
+                    <div className="bg-orange-50 rounded-xl p-3 text-sm text-[#c45825]">
                       Total do contrato: <strong>R$ {totalInstallments.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> em {installments.length} parcela{installments.length > 1 ? 's' : ''}
                     </div>
                   )}
@@ -196,7 +196,7 @@ export default function ClientModal({ onClose, onSave }) {
                     return (
                       <div key={i} className="flex justify-between items-center bg-white border border-gray-100 rounded-lg px-3 py-2 text-sm">
                         <span className="text-gray-700">{date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</span>
-                        <span className="font-semibold text-purple-700">R$ {parseFloat(monthlyAmount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                        <span className="font-semibold text-[#c45825]">R$ {parseFloat(monthlyAmount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                       </div>
                     );
                   })
@@ -204,7 +204,7 @@ export default function ClientModal({ onClose, onSave }) {
                   installments.map((inst, idx) => (
                     <div key={idx} className="flex justify-between items-center bg-white border border-gray-100 rounded-lg px-3 py-2 text-sm">
                       <span className="text-gray-700">{inst.description || `Parcela ${idx + 1}`} · {inst.dueDate ? new Date(inst.dueDate + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}</span>
-                      <span className="font-semibold text-purple-700">R$ {parseFloat(inst.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      <span className="font-semibold text-[#c45825]">R$ {parseFloat(inst.amount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                     </div>
                   ))
                 )}
@@ -213,7 +213,7 @@ export default function ClientModal({ onClose, onSave }) {
 
             <div className="flex gap-3 pt-2">
               <button type="button" onClick={() => setStep(1)} className="btn-ghost flex-1">← Voltar</button>
-              <button type="submit" className="bg-purple-600 text-white font-semibold py-2 px-4 rounded-xl hover:bg-purple-700 transition-colors flex-1">
+              <button type="submit" className="text-white font-semibold py-2 px-4 rounded-xl hover:opacity-90 transition-opacity flex-1" style={{ background: 'linear-gradient(135deg, #0d1b3e, #c45825)' }}>
                 Salvar cliente
               </button>
             </div>

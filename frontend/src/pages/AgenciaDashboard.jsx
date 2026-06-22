@@ -86,14 +86,11 @@ export default function AgenciaDashboard() {
   return (
     <div className="space-y-6">
       {/* Header da agência */}
-      <div className="bg-gradient-to-r from-purple-600 to-purple-400 rounded-2xl p-5 text-white">
-        <div className="flex items-center gap-3 mb-1">
-          <span className="text-3xl">🎨</span>
-          <div>
-            <h1 className="text-xl font-bold">Criativamente</h1>
-            <p className="text-purple-100 text-sm">Dashboard financeiro da agência</p>
-          </div>
-        </div>
+      <div className="rounded-2xl p-6 text-white overflow-hidden relative" style={{ background: 'linear-gradient(135deg, #0d1b3e 0%, #1a2d5a 50%, #c45825 100%)' }}>
+        <div className="absolute top-2 right-8 text-white/10 text-8xl font-black select-none" style={{ fontFamily: 'serif' }}>✦</div>
+        <p className="text-xs tracking-[0.2em] text-white/50 uppercase mb-3">✦ Criativamente</p>
+        <h1 className="text-2xl font-bold mb-1">Dashboard Financeiro</h1>
+        <p className="text-white/60 text-sm">Controle de receitas, gastos e clientes da agência</p>
       </div>
 
       {/* Filtros */}
@@ -111,7 +108,7 @@ export default function AgenciaDashboard() {
           <option value="gasto">🔴 Gastos</option>
           <option value="receita">💚 Receitas</option>
         </select>
-        <button className="bg-purple-600 text-white font-semibold py-2 px-4 rounded-xl hover:bg-purple-700 transition-colors ml-auto" onClick={() => { setEditingTx(null); setModalOpen(true); }}>
+        <button style={{ background: 'linear-gradient(135deg, #0d1b3e, #c45825)' }} className="text-white font-semibold py-2 px-4 rounded-xl hover:opacity-90 transition-opacity ml-auto" onClick={() => { setEditingTx(null); setModalOpen(true); }}>
           + Novo Lançamento
         </button>
       </div>
@@ -126,7 +123,7 @@ export default function AgenciaDashboard() {
           <SummaryCard label="Receitas" value={summary.receitas} color="bg-green-50" icon="💚" />
           <SummaryCard label="Gastos" value={summary.gastos} color="bg-red-50" icon="🔴" />
           <SummaryCard label={`Saldo — ${monthLabel}`} value={summary.saldo}
-            color={summary.saldo >= 0 ? 'bg-purple-50' : 'bg-orange-50'} icon="💜" />
+            color={summary.saldo >= 0 ? 'bg-orange-50' : 'bg-red-50'} icon="✦" />
         </div>
       )}
 
