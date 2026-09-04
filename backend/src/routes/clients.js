@@ -132,9 +132,12 @@ router.put('/:id/payments/:paymentId', async (req, res) => {
 // POST /api/clients/:id/payments/:paymentId/confirm - confirmar recebimento
 router.post('/:id/payments/:paymentId/confirm', async (req, res) => {
   try {
+    const { paidAt } = req.body || {};
+    const paidDate = paidAt ? new Date(paidAt) : new Date();
+
     const payment = await prisma.clientPayment.update({
       where: { id: Number(req.params.paymentId) },
-      data: { paid: true, paidAt: new Date() },
+      data: { paid: true, paidAt: paidDate },
       include: { client: true },
     });
 
@@ -147,7 +150,7 @@ router.post('/:id/payments/:paymentId/confirm', async (req, res) => {
         type: 'receita',
         context: 'agencia',
         source: 'web',
-        date: new Date(),
+        date: paidDate,
       },
     });
 

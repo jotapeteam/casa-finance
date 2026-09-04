@@ -12,51 +12,73 @@ const STATUS_LABELS = {
   completed: { label: 'Concluído', color: 'bg-gray-100 text-gray-500' },
 };
 
-function PaymentRow({ payment, clientId, onRefresh }) {
-  const [confirming, setConfirming] = useState(false);
-  const isPast = new Date(payment.dueDate) < new Date() && !payment.paid;
+function PaymentRow({ payment, onConfirm, onUnconfirm }) {
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [paidDate, setPaidDate] = useState(new Date().toISOString().slice(0, 10));
+  const [processing, setProcessing] = useState(false);
+
+  const isPast  = new Date(payment.dueDate) < new Date() && !payment.paid;
   const isToday = new Date(payment.dueDate).toDateString() === new Date().toDateString() && !payment.paid;
 
-  async function toggle() {
-    setConfirming(true);
-    try {
-      if (payment.paid) {
-        await unconfirmClientPayment(clientId, payment.id);
-      } else {
-        await confirmClientPayment(clientId, payment.id);
-      }
-      onRefresh();
-    } finally {
-      setConfirming(false);
-    }
+  async function handleConfirm() {
+    setProcessing(true);
+    try { await onConfirm(payment.id, paidDate); } finally { setProcessing(false); setShowDatePicker(false); }
   }
 
+  async function handleUnconfirm() {
+    setProcessing(true);
+    try { await onUnconfirm(payment.id); } finally { setProcessing(false); }
+  }
+
+  const paidAtDate = payment.paidAt ? new Date(payment.paidAt).toLocaleDateString('pt-BR') : null;
+  const dueLabel   = new Date(payment.dueDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
   return (
-    <div className={`flex items-center justify-between px-4 py-2.5 rounded-xl text-sm transition-colors ${payment.paid ? 'bg-green-50' : isPast ? 'bg-red-50' : isToday ? 'bg-yellow-50' : 'bg-gray-50'}`}>
-      <div className="flex items-center gap-3">
-        <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${payment.paid ? 'bg-green-100 text-green-700' : isPast ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-600'}`}>
-          {new Date(payment.dueDate).getDate()}
+    <div className={`rounded-xl text-sm transition-colors ${payment.paid ? 'bg-green-50' : isPast ? 'bg-red-50' : isToday ? 'bg-yellow-50' : 'bg-gray-50'}`}>
+      <div className="flex items-center justify-between px-4 py-2.5">
+        <div className="flex items-center gap-3">
+          <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${payment.paid ? 'bg-green-100 text-green-700' : isPast ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-600'}`}>
+            {new Date(payment.dueDate).getDate()}
+          </div>
+          <div>
+            <p className="font-medium text-gray-800">{payment.description}</p>
+            <p className="text-xs text-gray-400">
+              Venc.: {dueLabel}
+              {paidAtDate && <span className="text-green-600 ml-2">· Recebido em {paidAtDate}</span>}
+            </p>
+          </div>
         </div>
-        <div>
-          <p className="font-medium text-gray-800">{payment.description}</p>
-          <p className="text-xs text-gray-400">{new Date(payment.dueDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</p>
+        <div className="flex items-center gap-3">
+          <span className="font-semibold text-[#c45825]">{fmt(payment.amount)}</span>
+          {payment.paid ? (
+            <button onClick={handleUnconfirm} disabled={processing}
+              className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full hover:bg-red-100 hover:text-red-600 transition-colors">
+              ✓ Recebido
+            </button>
+          ) : showDatePicker ? null : (
+            <button onClick={() => setShowDatePicker(true)}
+              style={!isToday && !isPast ? { background: 'linear-gradient(135deg, #0d1b3e, #1a2d5a)', color: 'white' } : {}}
+              className={`text-xs px-3 py-1 rounded-full font-medium transition-all ${isToday ? 'bg-yellow-500 text-white hover:bg-yellow-600' : isPast ? 'bg-red-500 text-white hover:bg-red-600' : 'hover:opacity-90'}`}>
+              {isToday ? '⚡ Receber hoje' : isPast ? '⚠️ Receber' : 'Confirmar recebimento'}
+            </button>
+          )}
         </div>
       </div>
-      <div className="flex items-center gap-3">
-        <span className="font-semibold text-[#c45825]">{fmt(payment.amount)}</span>
-        {payment.paid ? (
-          <button onClick={toggle} disabled={confirming}
-            className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full hover:bg-red-100 hover:text-red-600 transition-colors">
-            ✓ Recebido
+
+      {/* Mini-formulário de data de recebimento */}
+      {showDatePicker && !payment.paid && (
+        <div className="px-4 pb-3 flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-gray-500">Data do recebimento:</span>
+          <input type="date" value={paidDate} onChange={e => setPaidDate(e.target.value)}
+            className="input text-xs py-1 w-36" />
+          <button onClick={handleConfirm} disabled={processing}
+            className="text-xs bg-green-600 text-white px-3 py-1 rounded-full font-medium hover:bg-green-700 transition-colors">
+            {processing ? '...' : 'Confirmar'}
           </button>
-        ) : (
-          <button onClick={toggle} disabled={confirming}
-            style={!isToday && !isPast ? { background: 'linear-gradient(135deg, #0d1b3e, #1a2d5a)', color: 'white' } : {}}
-            className={`text-xs px-3 py-1 rounded-full font-medium transition-all ${isToday ? 'bg-yellow-500 text-white hover:bg-yellow-600' : isPast ? 'bg-red-500 text-white hover:bg-red-600' : 'hover:opacity-90'}`}>
-            {confirming ? '...' : isToday ? '⚡ Receber hoje' : isPast ? '⚠️ Receber' : 'Confirmar recebimento'}
-          </button>
-        )}
-      </div>
+          <button onClick={() => setShowDatePicker(false)}
+            className="text-xs text-gray-400 hover:text-gray-600">Cancelar</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -81,6 +103,25 @@ function ClientCard({ client, onRefresh, onDelete }) {
   async function handleStatusChange(status) {
     await updateClient(client.id, { name: client.name, status, notes: client.notes });
     setEditingStatus(false);
+    onRefresh();
+  }
+
+  async function handleConfirmPayment(paymentId, paidAt) {
+    await confirmClientPayment(client.id, paymentId, paidAt);
+    // Se todos os pagamentos ficaram pagos, auto-concluir
+    const remainingUnpaid = client.payments.filter(p => p.id !== paymentId && !p.paid);
+    if (remainingUnpaid.length === 0 && client.status === 'active') {
+      await updateClient(client.id, { name: client.name, status: 'completed', notes: client.notes });
+    }
+    onRefresh();
+  }
+
+  async function handleUnconfirmPayment(paymentId) {
+    await unconfirmClientPayment(client.id, paymentId);
+    // Se voltou a ter pagamento pendente, reativar
+    if (client.status === 'completed') {
+      await updateClient(client.id, { name: client.name, status: 'active', notes: client.notes });
+    }
     onRefresh();
   }
 
@@ -172,7 +213,7 @@ function ClientCard({ client, onRefresh, onDelete }) {
           </div>
 
           {client.payments.map(p => (
-            <PaymentRow key={p.id} payment={p} clientId={client.id} onRefresh={onRefresh} />
+            <PaymentRow key={p.id} payment={p} onConfirm={handleConfirmPayment} onUnconfirm={handleUnconfirmPayment} />
           ))}
 
           {/* Formulário para adicionar parcelas */}

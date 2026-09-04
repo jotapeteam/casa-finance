@@ -41,7 +41,7 @@ export const getClientsForecast = (months = 4) => api.get('/clients/forecast', {
 export const createClient = (data) => api.post('/clients', data).then(r => r.data);
 export const updateClient = (id, data) => api.put(`/clients/${id}`, data).then(r => r.data);
 export const deleteClient = (id) => api.delete(`/clients/${id}`).then(r => r.data);
-export const confirmClientPayment = (clientId, paymentId) => api.post(`/clients/${clientId}/payments/${paymentId}/confirm`).then(r => r.data);
+export const confirmClientPayment = (clientId, paymentId, paidAt) => api.post(`/clients/${clientId}/payments/${paymentId}/confirm`, paidAt ? { paidAt } : {}).then(r => r.data);
 export const unconfirmClientPayment = (clientId, paymentId) => api.post(`/clients/${clientId}/payments/${paymentId}/unconfirm`).then(r => r.data);
 export const updateClientPayment = (clientId, paymentId, data) => api.put(`/clients/${clientId}/payments/${paymentId}`, data).then(r => r.data);
 export const addClientPayments = (clientId, installments) => api.post(`/clients/${clientId}/payments`, { installments }).then(r => r.data);
