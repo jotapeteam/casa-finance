@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { getClients, createClient, updateClient, deleteClient, confirmClientPayment, unconfirmClientPayment, addClientPayments } from '../api.js';
 import ClientModal from '../components/ClientModal.jsx';
 
@@ -257,10 +259,19 @@ function ClientCard({ client, onRefresh, onDelete }) {
 }
 
 export default function AgenciaClientes() {
-  const [clients, setClients] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const now = new Date();
+  const [clients, setClients]   = useState([]);
+  const [loading, setLoading]   = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
-  const [filter, setFilter] = useState('active');
+  const [filter, setFilter]     = useState('active');
+  const [month, setMonth]       = useState(now.getMonth() + 1);
+  const [year, setYear]         = useState(now.getFullYear());
+
+  const months = Array.from({ length: 12 }, (_, i) => ({
+    value: i + 1,
+    label: format(new Date(2000, i, 1), 'MMMM', { locale: ptBR }),
+  }));
+  const years = [now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1];
 
   async function load() {
     setLoading(true);
@@ -295,10 +306,17 @@ export default function AgenciaClientes() {
     .filter(p => !p.paid)
     .reduce((s, p) => s + p.amount, 0);
 
+  // Recebido filtrado pelo mês/ano selecionado (usa paidAt)
   const totalRecebido = clients
     .flatMap(c => c.payments)
-    .filter(p => p.paid)
+    .filter(p => {
+      if (!p.paid || !p.paidAt) return false;
+      const d = new Date(p.paidAt);
+      return d.getMonth() + 1 === month && d.getFullYear() === year;
+    })
     .reduce((s, p) => s + p.amount, 0);
+
+  const monthLabel = format(new Date(year, month - 1, 1), 'MMMM yyyy', { locale: ptBR });
 
   return (
     <div className="space-y-6">
@@ -318,6 +336,17 @@ export default function AgenciaClientes() {
         </div>
       </div>
 
+      {/* Seletor de mês */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-sm text-gray-500">Recebimentos de:</span>
+        <select className="input w-auto" value={month} onChange={e => setMonth(Number(e.target.value))}>
+          {months.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+        </select>
+        <select className="input w-auto" value={year} onChange={e => setYear(Number(e.target.value))}>
+          {years.map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+      </div>
+
       {/* Cards de resumo */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="card flex items-center gap-4">
@@ -330,14 +359,14 @@ export default function AgenciaClientes() {
         <div className="card flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-2xl">✅</div>
           <div>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Total recebido</p>
+            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide capitalize">Recebido — {monthLabel}</p>
             <p className="text-2xl font-bold text-green-700">{fmt(totalRecebido)}</p>
           </div>
         </div>
         <div className="card flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-2xl">⏳</div>
           <div>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">A receber</p>
+            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">A receber (ativos)</p>
             <p className="text-2xl font-bold text-orange-600">{fmt(totalPendente)}</p>
           </div>
         </div>

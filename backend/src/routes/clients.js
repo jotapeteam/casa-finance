@@ -163,10 +163,29 @@ router.post('/:id/payments/:paymentId/confirm', async (req, res) => {
 // POST /api/clients/:id/payments/:paymentId/unconfirm - desfazer confirmação
 router.post('/:id/payments/:paymentId/unconfirm', async (req, res) => {
   try {
+    // Fetch first so we know the description to find the matching transaction
+    const existing = await prisma.clientPayment.findUnique({
+      where: { id: Number(req.params.paymentId) },
+      include: { client: true },
+    });
+
     const payment = await prisma.clientPayment.update({
       where: { id: Number(req.params.paymentId) },
       data: { paid: false, paidAt: null },
     });
+
+    // Remove the transaction that was created on confirm
+    if (existing) {
+      await prisma.transaction.deleteMany({
+        where: {
+          description: `${existing.client.name} — ${existing.description}`,
+          category: '💰 Receita de Clientes',
+          context: 'agencia',
+          type: 'receita',
+        },
+      });
+    }
+
     res.json(payment);
   } catch (e) {
     res.status(500).json({ error: e.message });
