@@ -72,6 +72,10 @@ function ClientCard({ client, onRefresh, onDelete }) {
   const pending = client.payments.filter(p => !p.paid).length;
   const pct = total > 0 ? (received / total) * 100 : 0;
 
+  const serviceTypeMatch = client.notes?.match(/^\[(.+?)\]/);
+  const serviceType = serviceTypeMatch?.[1] || null;
+  const cleanNotes  = serviceType ? client.notes.replace(/^\[.+?\]\n?/, '').trim() : client.notes;
+
   const statusInfo = STATUS_LABELS[client.status] || STATUS_LABELS.active;
 
   async function handleStatusChange(status) {
@@ -103,8 +107,13 @@ function ClientCard({ client, onRefresh, onDelete }) {
             <span className="text-xs px-2 py-0.5 bg-orange-50 text-orange-600 rounded-full">
               {client.contractType === 'monthly' ? '🔄 Mensalidade' : '📅 Parcelas'}
             </span>
+            {serviceType && (
+              <span className="text-xs px-2 py-0.5 bg-purple-50 text-purple-700 rounded-full">
+                {serviceType === 'Contratação de Creators' ? '🎬 ' : serviceType === 'Permuta / Comissão' ? '🤝 ' : '📋 '}{serviceType}
+              </span>
+            )}
           </div>
-          {client.notes && <p className="text-xs text-gray-400 mb-2">{client.notes}</p>}
+          {cleanNotes && <p className="text-xs text-gray-400 mb-2">{cleanNotes}</p>}
 
           {/* Barra de progresso */}
           <div className="mb-2">

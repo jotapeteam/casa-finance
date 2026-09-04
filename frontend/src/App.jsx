@@ -6,6 +6,8 @@ import AgenciaClientes from './pages/AgenciaClientes.jsx';
 import AgenciaPrestadores from './pages/AgenciaPrestadores.jsx';
 import AgenciaObrigacoes from './pages/AgenciaObrigacoes.jsx';
 import AgenciaColaboradoras from './pages/AgenciaColaboradoras.jsx';
+import EmpresaTrafego from './pages/EmpresaTrafego.jsx';
+import EmpresaInfoprodutos from './pages/EmpresaInfoprodutos.jsx';
 import Login from './pages/Login.jsx';
 
 const TAB_GROUPS = [
@@ -20,11 +22,13 @@ const TAB_GROUPS = [
   },
   {
     id: 'empresa',
-    label: '💼 Empresa',
+    label: '📸 Instagram Carol',
     color: 'blue',
     tabs: [
       { id: 'empresa', label: 'Dashboard' },
       { id: 'fixos-empresa', label: 'Gastos Fixos' },
+      { id: 'empresa-trafego', label: 'Tráfego' },
+      { id: 'empresa-infoprodutos', label: 'Infoprodutos' },
     ],
   },
   {
@@ -140,6 +144,8 @@ export default function App() {
         {activeTab === 'fixos' && <GastosFixos context="casa" />}
         {activeTab === 'empresa' && <Dashboard context="empresa" />}
         {activeTab === 'fixos-empresa' && <GastosFixos context="empresa" />}
+        {activeTab === 'empresa-trafego' && <EmpresaTrafego />}
+        {activeTab === 'empresa-infoprodutos' && <EmpresaInfoprodutos />}
         {activeTab === 'agencia' && <AgenciaDashboard />}
         {activeTab === 'agencia-clientes' && <AgenciaClientes />}
         {activeTab === 'agencia-fixos' && <GastosFixos context="agencia" />}

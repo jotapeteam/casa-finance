@@ -7,6 +7,7 @@ function formatDate(date) {
 export default function ClientModal({ onClose, onSave }) {
   const [step, setStep] = useState(1); // 1 = info, 2 = parcelas
   const [contractType, setContractType] = useState('monthly');
+  const [serviceType, setServiceType] = useState('');
 
   // Avulso (single payment)
   const [avulsoAmount, setAvulsoAmount] = useState('');
@@ -54,10 +55,11 @@ export default function ClientModal({ onClose, onSave }) {
     if (contractType === 'avulso') {
       if (!avulsoAmount || !avulsoDate) return;
       // avulso: save immediately without step 2
+      const avulsoNotesWithType = [serviceType ? `[${serviceType}]` : '', notes.trim()].filter(Boolean).join('\n') || undefined;
       const payload = {
         name: name.trim(),
         contractType: 'installments',
-        notes: notes.trim() || undefined,
+        notes: avulsoNotesWithType,
         installments: [{
           amount: parseFloat(String(avulsoAmount).replace(',', '.')),
           dueDate: avulsoDate,
@@ -73,10 +75,12 @@ export default function ClientModal({ onClose, onSave }) {
   async function handleSave(e) {
     e.preventDefault();
 
+    const notesWithType = [serviceType ? `[${serviceType}]` : '', notes.trim()].filter(Boolean).join('\n') || undefined;
+
     const payload = {
       name: name.trim(),
       contractType,
-      notes: notes.trim() || undefined,
+      notes: notesWithType,
     };
 
     if (contractType === 'monthly') {
@@ -112,6 +116,18 @@ export default function ClientModal({ onClose, onSave }) {
             <div>
               <label className="label">Nome do cliente / marca</label>
               <input className="input" placeholder="Ex: Marca X, Empresa Y..." value={name} onChange={e => setName(e.target.value)} required />
+            </div>
+
+            <div>
+              <label className="label">Categoria de serviço</label>
+              <div className="flex gap-2 flex-wrap">
+                {['Contratação de Creators', 'Permuta / Comissão', 'Outro'].map(opt => (
+                  <button key={opt} type="button" onClick={() => setServiceType(serviceType === opt ? '' : opt)}
+                    className={`py-2 px-3 rounded-xl font-medium text-sm transition-colors border-2 ${serviceType === opt ? 'border-[#c45825] bg-orange-50 text-[#c45825]' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
+                    {opt === 'Contratação de Creators' ? '🎬 ' : opt === 'Permuta / Comissão' ? '🤝 ' : '📋 '}{opt}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div>

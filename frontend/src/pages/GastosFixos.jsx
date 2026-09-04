@@ -10,9 +10,9 @@ const CATEGORIES_CASA = [
 ];
 
 const CATEGORIES_EMPRESA = [
-  '💰 Receita JOTAPE', '💰 Receita Carol',
-  '🔧 Ferramentas', '🏛️ Imposto', '📊 Contadora',
-  '👩‍💼 Colaboradora', '📣 Tráfego', '📈 Investimentos',
+  '💰 Receita Carol',
+  '🔧 Ferramentas', '📊 Contadora',
+  '📣 Tráfego', '📈 Investimentos', '📦 Outros',
 ];
 
 const CATEGORIES_AGENCIA = [
@@ -25,7 +25,7 @@ function formatCurrency(v) {
 
 export default function GastosFixos({ context = 'casa' }) {
   const CATEGORIES = context === 'agencia' ? CATEGORIES_AGENCIA : context === 'empresa' ? CATEGORIES_EMPRESA : CATEGORIES_CASA;
-  const defaultPerson = context === 'agencia' ? 'Creatorizando' : 'JOTAPE';
+  const defaultPerson = context === 'agencia' ? 'Creatorizando' : context === 'empresa' ? 'Carol' : 'JOTAPE';
   const EMPTY = { description: '', amount: '', category: CATEGORIES[0], person: defaultPerson, dayOfMonth: 1, active: true };
 
   const [list, setList] = useState([]);
@@ -135,7 +135,7 @@ export default function GastosFixos({ context = 'casa' }) {
               <div>
                 <label className="label">Responsável</label>
                 <div className="flex gap-2">
-                  {['JOTAPE', 'Carol'].map(p => (
+                  {(context === 'empresa' ? ['Carol'] : ['JOTAPE', 'Carol']).map(p => (
                     <button key={p} type="button" onClick={() => set('person', p)}
                       className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${form.person === p ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
                       {p}
