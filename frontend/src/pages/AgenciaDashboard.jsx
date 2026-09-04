@@ -1,6 +1,76 @@
 import { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+function fmtCur(v) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
+}
+
+function monthKey(date) { return format(date, 'yyyy-MM'); }
+
+function ColaboradorasResumo({ month, year }) {
+  const currentDate = new Date(year, month - 1, 1);
+  const mk = monthKey(currentDate);
+
+  const list  = (() => { try { return JSON.parse(localStorage.getItem('creatorizando_colaboradoras')  || '[]'); } catch { return []; } })();
+  const pagtos = (() => { try { return JSON.parse(localStorage.getItem('creatorizando_colaboradoras_pagtos') || '{}'); } catch { return {}; } })();
+  const bonus  = (() => { try { return JSON.parse(localStorage.getItem('creatorizando_colaboradoras_bonus')  || '[]'); } catch { return []; } })();
+
+  const ativas = list.filter(c => c.active);
+  const bonusMes = bonus.filter(b => b.month === mk);
+  const totalBase = ativas.reduce((s, c) => s + (c.amount || 0), 0);
+  const totalBonus = bonusMes.reduce((s, b) => s + (b.amount || 0), 0);
+  const totalMes = totalBase + totalBonus;
+  const totalPago = ativas.filter(c => !!(pagtos[mk]?.[c.id])).reduce((s, c) => s + (c.amount || 0), 0)
+                  + bonusMes.filter(b => b.pago).reduce((s, b) => s + (b.amount || 0), 0);
+
+  if (ativas.length === 0) return null;
+
+  return (
+    <div className="card">
+      <h3 className="font-bold text-gray-800 mb-4">👩‍💼 Colaboradoras — {format(currentDate, 'MMMM yyyy', { locale: ptBR })}</h3>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+        <div className="bg-blue-50 rounded-xl p-3 text-center">
+          <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Ativas</p>
+          <p className="text-2xl font-bold text-blue-700">{ativas.length}</p>
+        </div>
+        <div className="bg-orange-50 rounded-xl p-3 text-center">
+          <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Base</p>
+          <p className="text-lg font-bold text-orange-700">{fmtCur(totalBase)}</p>
+        </div>
+        <div className="bg-yellow-50 rounded-xl p-3 text-center">
+          <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Bônus</p>
+          <p className="text-lg font-bold text-yellow-700">{fmtCur(totalBonus)}</p>
+        </div>
+        <div className="bg-green-50 rounded-xl p-3 text-center">
+          <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Total pago</p>
+          <p className="text-lg font-bold text-green-700">{fmtCur(totalPago)}</p>
+        </div>
+      </div>
+      <div className="space-y-2">
+        {ativas.map(c => {
+          const pago = !!(pagtos[mk]?.[c.id]);
+          const bonusColab = bonusMes.filter(b => b.colaboradoraId === c.id);
+          return (
+            <div key={c.id} className={`flex items-center justify-between rounded-xl px-4 py-2 text-sm ${pago ? 'bg-green-50' : 'bg-gray-50'}`}>
+              <span className="font-medium text-gray-800">{c.name}</span>
+              <div className="flex items-center gap-3">
+                {bonusColab.length > 0 && (
+                  <span className="text-xs text-yellow-600">+{fmtCur(bonusColab.reduce((s, b) => s + b.amount, 0))} bônus</span>
+                )}
+                <span className="font-semibold">{fmtCur(c.amount)}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${pago ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'}`}>{pago ? 'Pago' : 'Pendente'}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {totalMes > totalPago && (
+        <p className="text-xs text-gray-400 mt-3 text-right">Pendente: <span className="text-red-500 font-semibold">{fmtCur(totalMes - totalPago)}</span></p>
+      )}
+    </div>
+  );
+}
 import { getTransactions, getSummary, getMonthlyEvolution, createTransaction, updateTransaction, deleteTransaction } from '../api.js';
 import TransactionModal from '../components/TransactionModal.jsx';
 import TransactionTable from '../components/TransactionTable.jsx';
@@ -135,6 +205,9 @@ export default function AgenciaDashboard() {
 
       {/* Previsão (receita de clientes + gastos fixos) */}
       <PrevisaoAgencia month={month} year={year} onRefresh={load} />
+
+      {/* Colaboradoras */}
+      <ColaboradorasResumo month={month} year={year} />
 
       {/* Tabela de transações */}
       <TransactionTable transactions={transactions} onEdit={tx => { setEditingTx(tx); setModalOpen(true); }} onDelete={handleDelete} />

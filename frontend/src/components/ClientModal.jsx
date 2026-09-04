@@ -7,6 +7,11 @@ function formatDate(date) {
 export default function ClientModal({ onClose, onSave }) {
   const [step, setStep] = useState(1); // 1 = info, 2 = parcelas
   const [contractType, setContractType] = useState('monthly');
+
+  // Avulso (single payment)
+  const [avulsoAmount, setAvulsoAmount] = useState('');
+  const [avulsoDate, setAvulsoDate] = useState('');
+  const [avulsoDesc, setAvulsoDesc] = useState('');
   const [name, setName] = useState('');
   const [notes, setNotes] = useState('');
 
@@ -45,6 +50,22 @@ export default function ClientModal({ onClose, onSave }) {
     if (!name.trim()) return;
     if (contractType === 'monthly') {
       if (!monthlyAmount || !startDate) return;
+    }
+    if (contractType === 'avulso') {
+      if (!avulsoAmount || !avulsoDate) return;
+      // avulso: save immediately without step 2
+      const payload = {
+        name: name.trim(),
+        contractType: 'installments',
+        notes: notes.trim() || undefined,
+        installments: [{
+          amount: parseFloat(String(avulsoAmount).replace(',', '.')),
+          dueDate: avulsoDate,
+          description: avulsoDesc.trim() || 'Pagamento avulso',
+        }],
+      };
+      onSave(payload);
+      return;
     }
     setStep(2);
   }
@@ -104,10 +125,36 @@ export default function ClientModal({ onClose, onSave }) {
                   className={`flex-1 py-3 rounded-xl font-semibold text-sm transition-colors border-2 ${contractType === 'installments' ? 'border-[#c45825] bg-orange-50 text-[#c45825]' : 'border-gray-200 text-gray-600'}`}>
                   📅 Parcelas
                 </button>
+                <button type="button" onClick={() => setContractType('avulso')}
+                  className={`flex-1 py-3 rounded-xl font-semibold text-sm transition-colors border-2 ${contractType === 'avulso' ? 'border-[#c45825] bg-orange-50 text-[#c45825]' : 'border-gray-200 text-gray-600'}`}>
+                  💸 Avulso
+                </button>
               </div>
             </div>
 
-            {contractType === 'monthly' ? (
+            {contractType === 'avulso' ? (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="label">Valor (R$)</label>
+                    <input className="input" type="number" step="0.01" min="0.01" placeholder="0,00" value={avulsoAmount} onChange={e => setAvulsoAmount(e.target.value)} required />
+                  </div>
+                  <div>
+                    <label className="label">Data do pagamento</label>
+                    <input className="input" type="date" value={avulsoDate} onChange={e => setAvulsoDate(e.target.value)} required />
+                  </div>
+                </div>
+                <div>
+                  <label className="label">Descrição (opcional)</label>
+                  <input className="input" placeholder="Ex: Criação de identidade visual..." value={avulsoDesc} onChange={e => setAvulsoDesc(e.target.value)} />
+                </div>
+                {avulsoAmount && avulsoDate && (
+                  <div className="bg-orange-50 rounded-xl p-3 text-sm text-[#c45825]">
+                    Pagamento único de <strong>R$ {parseFloat(avulsoAmount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> em {avulsoDate ? new Date(avulsoDate + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}
+                  </div>
+                )}
+              </>
+            ) : contractType === 'monthly' ? (
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <div>

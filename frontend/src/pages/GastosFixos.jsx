@@ -16,8 +16,7 @@ const CATEGORIES_EMPRESA = [
 ];
 
 const CATEGORIES_AGENCIA = [
-  '👤 Creators', '👩‍💼 Colaboradoras', '🔧 Ferramentas',
-  '⚖️ Advogados', '🏛️ Imposto', '📊 Contadora', '📦 Outros',
+  '🔧 Ferramentas', '⚖️ Advogados', '📦 Outros',
 ];
 
 function formatCurrency(v) {
