@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getClients, createClient, updateClient, deleteClient, confirmClientPayment, unconfirmClientPayment, addClientPayments } from '../api.js';
+import { getClients, createClient, updateClient, deleteClient, confirmClientPayment, unconfirmClientPayment, addClientPayments, addClientCost, updateClientCost, deleteClientCost } from '../api.js';
 import ClientModal from '../components/ClientModal.jsx';
 
 function fmt(v) {
@@ -85,16 +85,61 @@ function PaymentRow({ payment, onConfirm, onUnconfirm }) {
   );
 }
 
+const COST_CATEGORIES = ['👤 Creators', '🎬 Produção', '🔧 Ferramentas', '📦 Outros'];
+
 function ClientCard({ client, onRefresh, onDelete }) {
   const [expanded, setExpanded] = useState(false);
   const [editingStatus, setEditingStatus] = useState(false);
   const [addingPayments, setAddingPayments] = useState(false);
   const [newPayments, setNewPayments] = useState([{ amount: '', dueDate: '', description: '' }]);
 
+  // Custos
+  const [showCosts, setShowCosts] = useState(false);
+  const [addingCost, setAddingCost] = useState(false);
+  const [editingCostId, setEditingCostId] = useState(null);
+  const EMPTY_COST = { description: '', amount: '', category: COST_CATEGORIES[0], date: new Date().toISOString().slice(0, 10) };
+  const [costForm, setCostForm] = useState(EMPTY_COST);
+
+  const costs = client.costs || [];
+  const totalCosts = costs.reduce((s, c) => s + c.amount, 0);
+
   const total = client.payments.reduce((s, p) => s + p.amount, 0);
   const received = client.payments.filter(p => p.paid).reduce((s, p) => s + p.amount, 0);
+  const liquido = received - totalCosts;
   const pending = client.payments.filter(p => !p.paid).length;
   const pct = total > 0 ? (received / total) * 100 : 0;
+
+  async function handleSaveCost(e) {
+    e.preventDefault();
+    const data = { ...costForm, amount: parseFloat(String(costForm.amount).replace(',', '.')) };
+    if (editingCostId) {
+      await updateClientCost(client.id, editingCostId, data);
+    } else {
+      await addClientCost(client.id, data);
+    }
+    setCostForm(EMPTY_COST);
+    setAddingCost(false);
+    setEditingCostId(null);
+    onRefresh();
+  }
+
+  function openEditCost(cost) {
+    setCostForm({
+      description: cost.description,
+      amount: cost.amount,
+      category: cost.category,
+      date: new Date(cost.date).toISOString().slice(0, 10),
+    });
+    setEditingCostId(cost.id);
+    setAddingCost(true);
+    setShowCosts(true);
+  }
+
+  async function handleDeleteCost(costId) {
+    if (!confirm('Remover este custo?')) return;
+    await deleteClientCost(client.id, costId);
+    onRefresh();
+  }
 
   const serviceTypeMatch = client.notes?.match(/^\[(.+?)\]/);
   const serviceType = serviceTypeMatch?.[1] || null;
@@ -169,12 +214,20 @@ function ClientCard({ client, onRefresh, onDelete }) {
             </div>
           </div>
 
-          <div className="flex gap-3 text-xs text-gray-500">
+          <div className="flex gap-3 text-xs text-gray-500 flex-wrap">
             <span>{client.payments.length} parcela{client.payments.length !== 1 ? 's' : ''}</span>
             <span>·</span>
             <span className="text-orange-600 font-medium">{pending} pendente{pending !== 1 ? 's' : ''}</span>
             <span>·</span>
             <span className="text-green-600 font-medium">{client.payments.length - pending} recebida{(client.payments.length - pending) !== 1 ? 's' : ''}</span>
+            {totalCosts > 0 && (
+              <>
+                <span>·</span>
+                <span className={`font-medium ${liquido >= 0 ? 'text-green-700' : 'text-red-600'}`}>
+                  Líquido: {fmt(liquido)}
+                </span>
+              </>
+            )}
           </div>
         </div>
 
@@ -252,6 +305,93 @@ function ClientCard({ client, onRefresh, onDelete }) {
               </div>
             </form>
           )}
+
+          {/* ── Seção de Custos ── */}
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="flex items-center justify-between mb-3">
+              <button onClick={() => setShowCosts(!showCosts)}
+                className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-gray-900">
+                <span>💸 Custos da campanha</span>
+                <span className="text-xs text-gray-400">({costs.length})</span>
+                <span className="text-xs">{showCosts ? '▲' : '▼'}</span>
+              </button>
+              <div className="flex items-center gap-3 text-xs">
+                {totalCosts > 0 && (
+                  <span className="text-gray-500">Total custos: <strong className="text-red-600">{fmt(totalCosts)}</strong></span>
+                )}
+                <button onClick={() => { setCostForm(EMPTY_COST); setEditingCostId(null); setAddingCost(true); setShowCosts(true); }}
+                  className="text-orange-600 hover:underline font-medium">+ Lançar custo</button>
+              </div>
+            </div>
+
+            {showCosts && (
+              <div className="space-y-2">
+                {/* Formulário de custo */}
+                {addingCost && (
+                  <form onSubmit={handleSaveCost} className="bg-orange-50 rounded-xl p-3 space-y-2">
+                    <p className="text-xs font-semibold text-gray-600">{editingCostId ? 'Editar custo' : 'Novo custo'}</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input className="input text-sm col-span-2" placeholder="Descrição (ex: Creator @fulano)"
+                        value={costForm.description} onChange={e => setCostForm(f => ({ ...f, description: e.target.value }))} required />
+                      <input className="input text-sm" type="number" step="0.01" min="0.01" placeholder="Valor (R$)"
+                        value={costForm.amount} onChange={e => setCostForm(f => ({ ...f, amount: e.target.value }))} required />
+                      <input className="input text-sm" type="date"
+                        value={costForm.date} onChange={e => setCostForm(f => ({ ...f, date: e.target.value }))} required />
+                      <select className="input text-sm col-span-2" value={costForm.category} onChange={e => setCostForm(f => ({ ...f, category: e.target.value }))}>
+                        {COST_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => { setAddingCost(false); setEditingCostId(null); }} className="btn-ghost text-xs flex-1">Cancelar</button>
+                      <button type="submit" className="text-white text-xs py-1.5 px-3 rounded-lg hover:opacity-90 flex-1" style={{ background: 'linear-gradient(135deg, #0d1b3e, #c45825)' }}>
+                        {editingCostId ? 'Salvar' : 'Lançar'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {/* Lista de custos */}
+                {costs.length === 0 && !addingCost ? (
+                  <p className="text-xs text-gray-400 text-center py-2">Nenhum custo lançado ainda</p>
+                ) : (
+                  costs.map(cost => (
+                    <div key={cost.id} className="flex items-center justify-between bg-red-50 rounded-xl px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">{cost.category.split(' ')[0]}</span>
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">{cost.description}</p>
+                          <p className="text-xs text-gray-400">{cost.category.replace(/^\S+\s/, '')} · {new Date(cost.date).toLocaleDateString('pt-BR')}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-red-600 text-sm">{fmt(cost.amount)}</span>
+                        <button onClick={() => openEditCost(cost)} className="btn-ghost text-xs py-1 px-1.5">✏️</button>
+                        <button onClick={() => handleDeleteCost(cost.id)} className="btn-ghost text-xs py-1 px-1.5 hover:text-red-500">🗑️</button>
+                      </div>
+                    </div>
+                  ))
+                )}
+
+                {/* Resumo financeiro */}
+                {(received > 0 || totalCosts > 0) && (
+                  <div className="mt-3 pt-3 border-t border-gray-200 grid grid-cols-3 gap-2 text-center">
+                    <div className="bg-green-50 rounded-xl p-2">
+                      <p className="text-xs text-gray-500 mb-0.5">Recebido</p>
+                      <p className="font-bold text-green-700 text-sm">{fmt(received)}</p>
+                    </div>
+                    <div className="bg-red-50 rounded-xl p-2">
+                      <p className="text-xs text-gray-500 mb-0.5">Custos</p>
+                      <p className="font-bold text-red-600 text-sm">{fmt(totalCosts)}</p>
+                    </div>
+                    <div className={`rounded-xl p-2 ${liquido >= 0 ? 'bg-blue-50' : 'bg-red-100'}`}>
+                      <p className="text-xs text-gray-500 mb-0.5">Líquido</p>
+                      <p className={`font-bold text-sm ${liquido >= 0 ? 'text-blue-700' : 'text-red-700'}`}>{fmt(liquido)}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

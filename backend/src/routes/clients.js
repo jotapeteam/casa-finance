@@ -10,7 +10,10 @@ const prisma = new PrismaClient();
 router.get('/', async (req, res) => {
   try {
     const clients = await prisma.client.findMany({
-      include: { payments: { orderBy: { dueDate: 'asc' } } },
+      include: {
+        payments: { orderBy: { dueDate: 'asc' } },
+        costs: { orderBy: { date: 'desc' } },
+      },
       orderBy: { name: 'asc' },
     });
     res.json(clients);
@@ -209,6 +212,54 @@ router.post('/:id/payments', async (req, res) => {
       )
     );
     res.json(payments);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// POST /api/clients/:id/costs - adicionar custo
+router.post('/:id/costs', async (req, res) => {
+  try {
+    const { description, amount, category, date } = req.body;
+    const cost = await prisma.clientCost.create({
+      data: {
+        clientId: Number(req.params.id),
+        description,
+        amount: Number(amount),
+        category: category || 'Outros',
+        date: date ? new Date(date) : new Date(),
+      },
+    });
+    res.json(cost);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// PUT /api/clients/:id/costs/:costId - editar custo
+router.put('/:id/costs/:costId', async (req, res) => {
+  try {
+    const { description, amount, category, date } = req.body;
+    const cost = await prisma.clientCost.update({
+      where: { id: Number(req.params.costId) },
+      data: {
+        description,
+        amount: Number(amount),
+        category: category || 'Outros',
+        date: date ? new Date(date) : undefined,
+      },
+    });
+    res.json(cost);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// DELETE /api/clients/:id/costs/:costId - remover custo
+router.delete('/:id/costs/:costId', async (req, res) => {
+  try {
+    await prisma.clientCost.delete({ where: { id: Number(req.params.costId) } });
+    res.json({ success: true });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

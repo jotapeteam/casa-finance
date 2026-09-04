@@ -45,3 +45,6 @@ export const confirmClientPayment = (clientId, paymentId, paidAt) => api.post(`/
 export const unconfirmClientPayment = (clientId, paymentId) => api.post(`/clients/${clientId}/payments/${paymentId}/unconfirm`).then(r => r.data);
 export const updateClientPayment = (clientId, paymentId, data) => api.put(`/clients/${clientId}/payments/${paymentId}`, data).then(r => r.data);
 export const addClientPayments = (clientId, installments) => api.post(`/clients/${clientId}/payments`, { installments }).then(r => r.data);
+export const addClientCost = (clientId, data) => api.post(`/clients/${clientId}/costs`, data).then(r => r.data);
+export const updateClientCost = (clientId, costId, data) => api.put(`/clients/${clientId}/costs/${costId}`, data).then(r => r.data);
+export const deleteClientCost = (clientId, costId) => api.delete(`/clients/${clientId}/costs/${costId}`).then(r => r.data);
