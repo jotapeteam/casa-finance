@@ -19,6 +19,7 @@ model Transaction {
   context            String           @default("casa")
   recurringExpenseId Int?
   recurringExpense   RecurringExpense? @relation(fields: [recurringExpenseId], references: [id])
+  clientCosts        ClientCost[]
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 
@@ -55,16 +56,18 @@ model Client {
 }
 
 model ClientCost {
-  id             Int      @id @default(autoincrement())
+  id             Int          @id @default(autoincrement())
   clientId       Int
-  client         Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client         Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
   description    String
   amount         Float
-  category       String   @default("Outros")
-  date           DateTime @default(now())
-  referenceMonth String   @default("") // yyyy-MM do mês que o custo pertence
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  category       String       @default("Outros")
+  date           DateTime     @default(now())
+  referenceMonth String       @default("")
+  transactionId  Int?         // Transaction gerada automaticamente no dashboard
+  transaction    Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   @@index([clientId])
 }

@@ -217,18 +217,39 @@ router.post('/:id/payments', async (req, res) => {
   }
 });
 
-// POST /api/clients/:id/costs - adicionar custo
+// POST /api/clients/:id/costs - adicionar custo (cria transação no dashboard)
 router.post('/:id/costs', async (req, res) => {
   try {
     const { description, amount, category, date, referenceMonth } = req.body;
+    const client = await prisma.client.findUnique({ where: { id: Number(req.params.id) } });
+    const costDate = date ? new Date(date) : new Date();
+    const costAmount = Number(amount);
+    const costCategory = category || 'Outros';
+    const refMonth = referenceMonth || format(new Date(), 'yyyy-MM');
+
+    // Criar transação de gasto no dashboard da agência
+    const transaction = await prisma.transaction.create({
+      data: {
+        description: `${client.name} — ${description}`,
+        amount: costAmount,
+        category: costCategory,
+        person: 'Creatorizando',
+        type: 'gasto',
+        context: 'agencia',
+        source: 'web',
+        date: costDate,
+      },
+    });
+
     const cost = await prisma.clientCost.create({
       data: {
         clientId: Number(req.params.id),
         description,
-        amount: Number(amount),
-        category: category || 'Outros',
-        date: date ? new Date(date) : new Date(),
-        referenceMonth: referenceMonth || format(new Date(), 'yyyy-MM'),
+        amount: costAmount,
+        category: costCategory,
+        date: costDate,
+        referenceMonth: refMonth,
+        transactionId: transaction.id,
       },
     });
     res.json(cost);
@@ -241,14 +262,35 @@ router.post('/:id/costs', async (req, res) => {
 router.put('/:id/costs/:costId', async (req, res) => {
   try {
     const { description, amount, category, date, referenceMonth } = req.body;
+    const existing = await prisma.clientCost.findUnique({
+      where: { id: Number(req.params.costId) },
+      include: { client: true },
+    });
+    const costDate = date ? new Date(date) : undefined;
+    const costAmount = Number(amount);
+    const costCategory = category || 'Outros';
+
+    // Atualizar transação vinculada
+    if (existing?.transactionId) {
+      await prisma.transaction.update({
+        where: { id: existing.transactionId },
+        data: {
+          description: `${existing.client.name} — ${description}`,
+          amount: costAmount,
+          category: costCategory,
+          ...(costDate ? { date: costDate } : {}),
+        },
+      });
+    }
+
     const cost = await prisma.clientCost.update({
       where: { id: Number(req.params.costId) },
       data: {
         description,
-        amount: Number(amount),
-        category: category || 'Outros',
-        date: date ? new Date(date) : undefined,
-        referenceMonth: referenceMonth || undefined,
+        amount: costAmount,
+        category: costCategory,
+        ...(costDate ? { date: costDate } : {}),
+        ...(referenceMonth ? { referenceMonth } : {}),
       },
     });
     res.json(cost);
@@ -257,9 +299,20 @@ router.put('/:id/costs/:costId', async (req, res) => {
   }
 });
 
-// DELETE /api/clients/:id/costs/:costId - remover custo
+// DELETE /api/clients/:id/costs/:costId - remover custo e transação vinculada
 router.delete('/:id/costs/:costId', async (req, res) => {
   try {
+    const existing = await prisma.clientCost.findUnique({
+      where: { id: Number(req.params.costId) },
+    });
+    // Desvincular antes de deletar (ON DELETE SET NULL cuida disso, mas garantimos)
+    await prisma.clientCost.update({
+      where: { id: Number(req.params.costId) },
+      data: { transactionId: null },
+    });
+    if (existing?.transactionId) {
+      await prisma.transaction.delete({ where: { id: existing.transactionId } });
+    }
     await prisma.clientCost.delete({ where: { id: Number(req.params.costId) } });
     res.json({ success: true });
   } catch (e) {
