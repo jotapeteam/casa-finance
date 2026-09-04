@@ -488,6 +488,12 @@ export default function AgenciaClientes() {
     })
     .reduce((s, p) => s + p.amount, 0);
 
+  const mk = `${year}-${String(month).padStart(2, '0')}`;
+  const totalGastos = clients
+    .flatMap(c => c.costs || [])
+    .filter(c => c.referenceMonth === mk)
+    .reduce((s, c) => s + c.amount, 0);
+
   const monthLabel = format(new Date(year, month - 1, 1), 'MMMM yyyy', { locale: ptBR });
 
   return (
@@ -520,26 +526,36 @@ export default function AgenciaClientes() {
       </div>
 
       {/* Cards de resumo */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="card flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-2xl">👥</div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="card flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-xl flex-shrink-0">👥</div>
           <div>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Clientes ativos</p>
+            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Ativos</p>
             <p className="text-2xl font-bold text-gray-900">{clients.filter(c => c.status === 'active').length}</p>
           </div>
         </div>
-        <div className="card flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-2xl">✅</div>
+        <div className="card flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center text-xl flex-shrink-0">✅</div>
           <div>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide capitalize">Recebido — {monthLabel}</p>
-            <p className="text-2xl font-bold text-green-700">{fmt(totalRecebido)}</p>
+            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide capitalize">Recebido</p>
+            <p className="text-xl font-bold text-green-700">{fmt(totalRecebido)}</p>
+            <p className="text-xs text-gray-400 capitalize">{monthLabel}</p>
           </div>
         </div>
-        <div className="card flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-2xl">⏳</div>
+        <div className="card flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-xl flex-shrink-0">💸</div>
           <div>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide capitalize">A receber — {monthLabel}</p>
-            <p className="text-2xl font-bold text-orange-600">{fmt(totalPendente)}</p>
+            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Gastos</p>
+            <p className="text-xl font-bold text-red-600">{fmt(totalGastos)}</p>
+            <p className="text-xs text-gray-400 capitalize">{monthLabel}</p>
+          </div>
+        </div>
+        <div className="card flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-xl flex-shrink-0">⏳</div>
+          <div>
+            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">A receber</p>
+            <p className="text-xl font-bold text-orange-600">{fmt(totalPendente)}</p>
+            <p className="text-xs text-gray-400 capitalize">{monthLabel}</p>
           </div>
         </div>
       </div>
