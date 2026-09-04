@@ -1,91 +1,102 @@
 import { useState } from 'react';
 
-function formatDate(date) {
-  return new Date(date).toLocaleDateString('pt-BR');
+function addDays(dateStr, days) {
+  const d = new Date(dateStr + 'T12:00:00');
+  d.setDate(d.getDate() + Number(days));
+  return d;
+}
+
+function addMonthsToDate(date, months) {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+
+function toDateStr(date) {
+  return date.toISOString().slice(0, 10);
 }
 
 export default function ClientModal({ onClose, onSave }) {
-  const [step, setStep] = useState(1); // 1 = info, 2 = parcelas
+  const [step, setStep]           = useState(1);
   const [contractType, setContractType] = useState('monthly');
-  const [serviceType, setServiceType] = useState('');
-
-  // Avulso (single payment)
-  const [avulsoAmount, setAvulsoAmount] = useState('');
-  const [avulsoDate, setAvulsoDate] = useState('');
-  const [avulsoDesc, setAvulsoDesc] = useState('');
-  const [name, setName] = useState('');
-  const [notes, setNotes] = useState('');
+  const [serviceType, setServiceType]   = useState('');
+  const [name, setName]           = useState('');
+  const [notes, setNotes]         = useState('');
 
   // Monthly
-  const [monthlyAmount, setMonthlyAmount] = useState('');
-  const [startDate, setStartDate] = useState('');
+  const [monthlyAmount, setMonthlyAmount]   = useState('');
+  const [contractDate, setContractDate]     = useState('');
+  const [paymentDays, setPaymentDays]       = useState(30);
   const [numberOfMonths, setNumberOfMonths] = useState(12);
 
   // Installments
-  const [installments, setInstallments] = useState([
-    { amount: '', dueDate: '', description: '' },
-  ]);
+  const [installments, setInstallments] = useState([{ amount: '', dueDate: '', description: '' }]);
 
+  // Avulso
+  const [avulsoAmount, setAvulsoAmount] = useState('');
+  const [avulsoContractDate, setAvulsoContractDate] = useState('');
+  const [avulsoPaymentDays, setAvulsoPaymentDays]   = useState(30);
+  const [avulsoDesc, setAvulsoDesc]     = useState('');
+
+  /* ── helpers ── */
   function addInstallment() {
     setInstallments(prev => [...prev, { amount: '', dueDate: '', description: '' }]);
   }
-
   function removeInstallment(idx) {
     setInstallments(prev => prev.filter((_, i) => i !== idx));
   }
-
   function setInstallmentField(idx, field, value) {
     setInstallments(prev => prev.map((inst, i) => i === idx ? { ...inst, [field]: value } : inst));
   }
-
   function autoFillDescriptions() {
     const total = installments.length;
-    setInstallments(prev => prev.map((inst, i) => ({
-      ...inst,
-      description: inst.description || `Parcela ${i + 1}/${total}`,
-    })));
+    setInstallments(prev => prev.map((inst, i) => ({ ...inst, description: inst.description || `Parcela ${i + 1}/${total}` })));
   }
 
+  // First due date for monthly
+  const firstDueDate = contractDate && paymentDays ? addDays(contractDate, paymentDays) : null;
+  const firstDueDateStr = firstDueDate ? toDateStr(firstDueDate) : null;
+
+  // First due date for avulso
+  const avulsoDueDate = avulsoContractDate && avulsoPaymentDays ? addDays(avulsoContractDate, avulsoPaymentDays) : null;
+
+  /* ── step 1 ── */
   function handleNext(e) {
     e.preventDefault();
     if (!name.trim()) return;
-    if (contractType === 'monthly') {
-      if (!monthlyAmount || !startDate) return;
-    }
+
     if (contractType === 'avulso') {
-      if (!avulsoAmount || !avulsoDate) return;
-      // avulso: save immediately without step 2
-      const avulsoNotesWithType = [serviceType ? `[${serviceType}]` : '', notes.trim()].filter(Boolean).join('\n') || undefined;
-      const payload = {
+      if (!avulsoAmount || !avulsoContractDate) return;
+      const notesWithType = [serviceType ? `[${serviceType}]` : '', notes.trim()].filter(Boolean).join('\n') || undefined;
+      onSave({
         name: name.trim(),
         contractType: 'installments',
-        notes: avulsoNotesWithType,
+        notes: notesWithType,
         installments: [{
           amount: parseFloat(String(avulsoAmount).replace(',', '.')),
-          dueDate: avulsoDate,
+          dueDate: avulsoDueDate ? toDateStr(avulsoDueDate) : avulsoContractDate,
           description: avulsoDesc.trim() || 'Pagamento avulso',
         }],
-      };
-      onSave(payload);
+      });
       return;
     }
+
+    if (contractType === 'monthly') {
+      if (!monthlyAmount || !contractDate) return;
+    }
+
     setStep(2);
   }
 
+  /* ── step 2 ── */
   async function handleSave(e) {
     e.preventDefault();
-
     const notesWithType = [serviceType ? `[${serviceType}]` : '', notes.trim()].filter(Boolean).join('\n') || undefined;
-
-    const payload = {
-      name: name.trim(),
-      contractType,
-      notes: notesWithType,
-    };
+    const payload = { name: name.trim(), contractType, notes: notesWithType };
 
     if (contractType === 'monthly') {
-      payload.monthlyAmount = parseFloat(String(monthlyAmount).replace(',', '.'));
-      payload.startDate = startDate;
+      payload.monthlyAmount  = parseFloat(String(monthlyAmount).replace(',', '.'));
+      payload.startDate      = firstDueDateStr;
       payload.numberOfMonths = Number(numberOfMonths);
     } else {
       payload.installments = installments.map((inst, idx) => ({
@@ -113,11 +124,13 @@ export default function ClientModal({ onClose, onSave }) {
 
         {step === 1 ? (
           <form onSubmit={handleNext} className="p-5 space-y-4">
+            {/* Nome */}
             <div>
               <label className="label">Nome do cliente / marca</label>
               <input className="input" placeholder="Ex: Marca X, Empresa Y..." value={name} onChange={e => setName(e.target.value)} required />
             </div>
 
+            {/* Categoria de serviço */}
             <div>
               <label className="label">Categoria de serviço</label>
               <div className="flex gap-2 flex-wrap">
@@ -130,25 +143,21 @@ export default function ClientModal({ onClose, onSave }) {
               </div>
             </div>
 
+            {/* Tipo de contrato */}
             <div>
               <label className="label">Tipo de contrato</label>
               <div className="flex gap-3">
-                <button type="button" onClick={() => setContractType('monthly')}
-                  className={`flex-1 py-3 rounded-xl font-semibold text-sm transition-colors border-2 ${contractType === 'monthly' ? 'border-[#c45825] bg-orange-50 text-[#c45825]' : 'border-gray-200 text-gray-600'}`}>
-                  🔄 Mensalidade fixa
-                </button>
-                <button type="button" onClick={() => setContractType('installments')}
-                  className={`flex-1 py-3 rounded-xl font-semibold text-sm transition-colors border-2 ${contractType === 'installments' ? 'border-[#c45825] bg-orange-50 text-[#c45825]' : 'border-gray-200 text-gray-600'}`}>
-                  📅 Parcelas
-                </button>
-                <button type="button" onClick={() => setContractType('avulso')}
-                  className={`flex-1 py-3 rounded-xl font-semibold text-sm transition-colors border-2 ${contractType === 'avulso' ? 'border-[#c45825] bg-orange-50 text-[#c45825]' : 'border-gray-200 text-gray-600'}`}>
-                  💸 Avulso
-                </button>
+                {[['monthly', '🔄 Mensalidade fixa'], ['installments', '📅 Parcelas'], ['avulso', '💸 Avulso']].map(([id, label]) => (
+                  <button key={id} type="button" onClick={() => setContractType(id)}
+                    className={`flex-1 py-3 rounded-xl font-semibold text-sm transition-colors border-2 ${contractType === id ? 'border-[#c45825] bg-orange-50 text-[#c45825]' : 'border-gray-200 text-gray-600'}`}>
+                    {label}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {contractType === 'avulso' ? (
+            {/* ── AVULSO ── */}
+            {contractType === 'avulso' && (
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -156,84 +165,104 @@ export default function ClientModal({ onClose, onSave }) {
                     <input className="input" type="number" step="0.01" min="0.01" placeholder="0,00" value={avulsoAmount} onChange={e => setAvulsoAmount(e.target.value)} required />
                   </div>
                   <div>
-                    <label className="label">Data do pagamento</label>
-                    <input className="input" type="date" value={avulsoDate} onChange={e => setAvulsoDate(e.target.value)} required />
+                    <label className="label">Data de contratação</label>
+                    <input className="input" type="date" value={avulsoContractDate} onChange={e => setAvulsoContractDate(e.target.value)} required />
                   </div>
+                </div>
+                <div>
+                  <label className="label">Prazo para pagamento (dias)</label>
+                  <input className="input" type="number" min="0" max="365" value={avulsoPaymentDays} onChange={e => setAvulsoPaymentDays(e.target.value)} />
                 </div>
                 <div>
                   <label className="label">Descrição (opcional)</label>
                   <input className="input" placeholder="Ex: Criação de identidade visual..." value={avulsoDesc} onChange={e => setAvulsoDesc(e.target.value)} />
                 </div>
-                {avulsoAmount && avulsoDate && (
+                {avulsoDueDate && (
                   <div className="bg-orange-50 rounded-xl p-3 text-sm text-[#c45825]">
-                    Pagamento único de <strong>R$ {parseFloat(avulsoAmount || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> em {avulsoDate ? new Date(avulsoDate + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}
+                    Vencimento: <strong>{avulsoDueDate.toLocaleDateString('pt-BR')}</strong>
+                    <span className="text-xs text-orange-400 ml-2">({avulsoPaymentDays} dias após {new Date(avulsoContractDate + 'T12:00:00').toLocaleDateString('pt-BR')})</span>
                   </div>
                 )}
-              </>
-            ) : contractType === 'monthly' ? (
-              <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="label">Valor mensal (R$)</label>
-                    <input className="input" type="number" step="0.01" min="0.01" placeholder="0,00" value={monthlyAmount} onChange={e => setMonthlyAmount(e.target.value)} required />
-                  </div>
-                  <div>
-                    <label className="label">Meses a gerar</label>
-                    <input className="input" type="number" min="1" max="60" value={numberOfMonths} onChange={e => setNumberOfMonths(e.target.value)} required />
-                  </div>
-                </div>
-                <div>
-                  <label className="label">Data do 1º vencimento</label>
-                  <input className="input" type="date" value={startDate} onChange={e => setStartDate(e.target.value)} required />
-                </div>
-                {monthlyAmount && startDate && (
-                  <div className="bg-orange-50 rounded-xl p-3 text-sm text-[#c45825]">
-                    <p>Total previsto: <strong>R$ {(parseFloat(monthlyAmount) * numberOfMonths).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong></p>
-                    <p className="text-xs mt-0.5 text-orange-400">Geração de {numberOfMonths} parcelas mensais a partir de {startDate ? new Date(startDate + 'T12:00:00').toLocaleDateString('pt-BR') : '—'}</p>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="label mb-0">Parcelas do contrato</label>
-                    <button type="button" onClick={autoFillDescriptions} className="text-xs text-[#c45825] hover:underline">Auto-preencher descrições</button>
-                  </div>
-                  {installments.map((inst, idx) => (
-                    <div key={idx} className="grid grid-cols-12 gap-2 items-start">
-                      <div className="col-span-5">
-                        <input className="input text-sm" type="number" step="0.01" placeholder="Valor" value={inst.amount}
-                          onChange={e => setInstallmentField(idx, 'amount', e.target.value)} required />
-                      </div>
-                      <div className="col-span-4">
-                        <input className="input text-sm" type="date" value={inst.dueDate}
-                          onChange={e => setInstallmentField(idx, 'dueDate', e.target.value)} required />
-                      </div>
-                      <div className="col-span-2">
-                        <input className="input text-sm" placeholder="Label" value={inst.description}
-                          onChange={e => setInstallmentField(idx, 'description', e.target.value)} />
-                      </div>
-                      <div className="col-span-1 flex items-center justify-center pt-2">
-                        {installments.length > 1 && (
-                          <button type="button" onClick={() => removeInstallment(idx)} className="text-red-400 hover:text-red-600 text-lg leading-none">×</button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  <button type="button" onClick={addInstallment} className="btn-ghost w-full text-sm">+ Adicionar parcela</button>
-                  {totalInstallments > 0 && (
-                    <div className="bg-orange-50 rounded-xl p-3 text-sm text-[#c45825]">
-                      Total do contrato: <strong>R$ {totalInstallments.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> em {installments.length} parcela{installments.length > 1 ? 's' : ''}
-                    </div>
-                  )}
-                </div>
               </>
             )}
 
+            {/* ── MENSALIDADE ── */}
+            {contractType === 'monthly' && (
+              <>
+                <div>
+                  <label className="label">Valor mensal (R$)</label>
+                  <input className="input" type="number" step="0.01" min="0.01" placeholder="0,00" value={monthlyAmount} onChange={e => setMonthlyAmount(e.target.value)} required />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="label">Data de contratação</label>
+                    <input className="input" type="date" value={contractDate} onChange={e => setContractDate(e.target.value)} required />
+                  </div>
+                  <div>
+                    <label className="label">Prazo para 1º pagamento (dias)</label>
+                    <input className="input" type="number" min="0" max="365" value={paymentDays} onChange={e => setPaymentDays(e.target.value)} />
+                  </div>
+                </div>
+                <div>
+                  <label className="label">Meses a gerar</label>
+                  <input className="input" type="number" min="1" max="60" value={numberOfMonths} onChange={e => setNumberOfMonths(e.target.value)} required />
+                </div>
+                {firstDueDate && (
+                  <div className="bg-orange-50 rounded-xl p-3 text-sm text-[#c45825]">
+                    <p>1º vencimento: <strong>{firstDueDate.toLocaleDateString('pt-BR')}</strong>
+                      <span className="text-xs text-orange-400 ml-2">({paymentDays} dias após {new Date(contractDate + 'T12:00:00').toLocaleDateString('pt-BR')})</span>
+                    </p>
+                    {monthlyAmount && (
+                      <p className="text-xs mt-1 text-orange-500">
+                        {numberOfMonths} parcelas · total: R$ {(parseFloat(monthlyAmount) * numberOfMonths).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* ── PARCELAS ── */}
+            {contractType === 'installments' && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="label mb-0">Parcelas do contrato</label>
+                  <button type="button" onClick={autoFillDescriptions} className="text-xs text-[#c45825] hover:underline">Auto-preencher descrições</button>
+                </div>
+                {installments.map((inst, idx) => (
+                  <div key={idx} className="grid grid-cols-12 gap-2 items-start">
+                    <div className="col-span-5">
+                      <input className="input text-sm" type="number" step="0.01" placeholder="Valor" value={inst.amount}
+                        onChange={e => setInstallmentField(idx, 'amount', e.target.value)} required />
+                    </div>
+                    <div className="col-span-4">
+                      <input className="input text-sm" type="date" value={inst.dueDate}
+                        onChange={e => setInstallmentField(idx, 'dueDate', e.target.value)} required />
+                    </div>
+                    <div className="col-span-2">
+                      <input className="input text-sm" placeholder="Label" value={inst.description}
+                        onChange={e => setInstallmentField(idx, 'description', e.target.value)} />
+                    </div>
+                    <div className="col-span-1 flex items-center justify-center pt-2">
+                      {installments.length > 1 && (
+                        <button type="button" onClick={() => removeInstallment(idx)} className="text-red-400 hover:text-red-600 text-lg leading-none">×</button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                <button type="button" onClick={addInstallment} className="btn-ghost w-full text-sm">+ Adicionar parcela</button>
+                {totalInstallments > 0 && (
+                  <div className="bg-orange-50 rounded-xl p-3 text-sm text-[#c45825]">
+                    Total: <strong>R$ {totalInstallments.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong> em {installments.length} parcela{installments.length > 1 ? 's' : ''}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Observações */}
             <div>
               <label className="label">Observações (opcional)</label>
-              <input className="input" placeholder="Tipo de serviço, detalhes do contrato..." value={notes} onChange={e => setNotes(e.target.value)} />
+              <input className="input" placeholder="Detalhes do contrato..." value={notes} onChange={e => setNotes(e.target.value)} />
             </div>
 
             <div className="flex gap-3 pt-2">
@@ -242,11 +271,16 @@ export default function ClientModal({ onClose, onSave }) {
             </div>
           </form>
         ) : (
+          /* ── STEP 2: preview ── */
           <form onSubmit={handleSave} className="p-5 space-y-4">
             <div className="bg-gray-50 rounded-xl p-4">
               <p className="font-bold text-gray-800">{name}</p>
               <p className="text-sm text-gray-500">{contractType === 'monthly' ? 'Mensalidade fixa' : 'Parcelas personalizadas'}</p>
-              {notes && <p className="text-xs text-gray-400 mt-1">{notes}</p>}
+              {firstDueDate && contractType === 'monthly' && (
+                <p className="text-xs text-orange-500 mt-1">
+                  Contratação: {new Date(contractDate + 'T12:00:00').toLocaleDateString('pt-BR')} · 1º vencimento: {firstDueDate.toLocaleDateString('pt-BR')}
+                </p>
+              )}
             </div>
 
             <div>
@@ -254,11 +288,10 @@ export default function ClientModal({ onClose, onSave }) {
               <div className="space-y-1 max-h-64 overflow-y-auto">
                 {contractType === 'monthly' ? (
                   Array.from({ length: numberOfMonths }, (_, i) => {
-                    const date = new Date(startDate + 'T12:00:00');
-                    date.setMonth(date.getMonth() + i);
+                    const due = i === 0 ? firstDueDate : addMonthsToDate(firstDueDate, i);
                     return (
                       <div key={i} className="flex justify-between items-center bg-white border border-gray-100 rounded-lg px-3 py-2 text-sm">
-                        <span className="text-gray-700">{date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</span>
+                        <span className="text-gray-700">{due.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
                         <span className="font-semibold text-[#c45825]">R$ {parseFloat(monthlyAmount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                       </div>
                     );
