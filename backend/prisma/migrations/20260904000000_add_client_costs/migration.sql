@@ -6,8 +6,6 @@ CREATE TABLE "ClientCost" (
     "amount" DOUBLE PRECISION NOT NULL,
     "category" TEXT NOT NULL DEFAULT 'Outros',
     "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "referenceMonth" TEXT NOT NULL DEFAULT '',
-    "transactionId" INTEGER,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
