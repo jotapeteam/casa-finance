@@ -10,9 +10,9 @@ const CATEGORIES_CASA = [
 ];
 
 const CATEGORIES_EMPRESA = [
-  '💰 Receita JOTAPE', '💰 Receita Carol',
-  '🔧 Ferramentas', '🏛️ Imposto', '📊 Contadora',
-  '👩‍💼 Colaboradora', '📣 Tráfego', '📈 Investimentos',
+  '💰 Receita Carol',
+  '🔧 Ferramentas', '📊 Contadora',
+  '📣 Tráfego', '📈 Investimentos', '📦 Outros',
 ];
 
 const CATEGORIES_AGENCIA_GASTO = [
@@ -39,7 +39,7 @@ export default function TransactionModal({ transaction, onClose, onSave, context
     description: '',
     category: CATEGORIES[0],
     type: isAgencia ? 'gasto' : context === 'empresa' ? 'receita' : 'gasto',
-    person: isAgencia ? 'Creatorizando' : 'JOTAPE',
+    person: isAgencia ? 'Creatorizando' : context === 'empresa' ? 'Carol' : 'JOTAPE',
     date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
   });
 
@@ -50,7 +50,7 @@ export default function TransactionModal({ transaction, onClose, onSave, context
         description: transaction.description || '',
         category: transaction.category || getCategoriesByType(transaction.type || 'gasto')[0],
         type: transaction.type || 'gasto',
-        person: transaction.person || (isAgencia ? 'Creatorizando' : 'JOTAPE'),
+        person: transaction.person || (isAgencia ? 'Creatorizando' : context === 'empresa' ? 'Carol' : 'JOTAPE'),
         // Usar ISO UTC para evitar que timezone do navegador desloque a data para outro mês
         date: transaction.date
           ? new Date(transaction.date).toISOString().slice(0, 16)
@@ -117,7 +117,7 @@ export default function TransactionModal({ transaction, onClose, onSave, context
             </select>
           </div>
 
-          {!isAgencia && (
+          {!isAgencia && context !== 'empresa' && (
             <div>
               <label className="label">Quem pagou</label>
               <div className="flex gap-3">

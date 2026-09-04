@@ -303,7 +303,11 @@ export default function AgenciaClientes() {
   const totalPendente = clients
     .filter(c => c.status === 'active')
     .flatMap(c => c.payments)
-    .filter(p => !p.paid)
+    .filter(p => {
+      if (p.paid) return false;
+      const d = new Date(p.dueDate);
+      return d.getMonth() + 1 === month && d.getFullYear() === year;
+    })
     .reduce((s, p) => s + p.amount, 0);
 
   // Recebido filtrado pelo mês/ano selecionado (usa paidAt)
@@ -366,7 +370,7 @@ export default function AgenciaClientes() {
         <div className="card flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-2xl">⏳</div>
           <div>
-            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">A receber (ativos)</p>
+            <p className="text-xs text-gray-500 font-medium uppercase tracking-wide capitalize">A receber — {monthLabel}</p>
             <p className="text-2xl font-bold text-orange-600">{fmt(totalPendente)}</p>
           </div>
         </div>
