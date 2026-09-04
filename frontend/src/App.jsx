@@ -9,6 +9,7 @@ import AgenciaColaboradoras from './pages/AgenciaColaboradoras.jsx';
 import EmpresaTrafego from './pages/EmpresaTrafego.jsx';
 import EmpresaInfoprodutos from './pages/EmpresaInfoprodutos.jsx';
 import EmpresaColaboradora from './pages/EmpresaColaboradora.jsx';
+import JoaoTrafego from './pages/JoaoTrafego.jsx';
 import Login from './pages/Login.jsx';
 
 const TAB_GROUPS = [
@@ -31,6 +32,16 @@ const TAB_GROUPS = [
       { id: 'empresa-trafego', label: 'Tráfego' },
       { id: 'empresa-infoprodutos', label: 'Infoprodutos' },
       { id: 'empresa-colaboradora', label: 'Colaboradora' },
+    ],
+  },
+  {
+    id: 'joao',
+    label: '💼 Empresa João',
+    color: 'blue',
+    tabs: [
+      { id: 'joao', label: 'Dashboard' },
+      { id: 'fixos-joao', label: 'Gastos Fixos' },
+      { id: 'joao-trafego', label: 'Tráfego' },
     ],
   },
   {
@@ -149,6 +160,9 @@ export default function App() {
         {activeTab === 'empresa-trafego' && <EmpresaTrafego />}
         {activeTab === 'empresa-infoprodutos' && <EmpresaInfoprodutos />}
         {activeTab === 'empresa-colaboradora' && <EmpresaColaboradora />}
+        {activeTab === 'joao' && <Dashboard context="joao" />}
+        {activeTab === 'fixos-joao' && <GastosFixos context="joao" />}
+        {activeTab === 'joao-trafego' && <JoaoTrafego />}
         {activeTab === 'agencia' && <AgenciaDashboard />}
         {activeTab === 'agencia-clientes' && <AgenciaClientes />}
         {activeTab === 'agencia-fixos' && <GastosFixos context="agencia" />}

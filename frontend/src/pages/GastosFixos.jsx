@@ -15,6 +15,12 @@ const CATEGORIES_EMPRESA = [
   '📣 Tráfego', '📈 Investimentos', '📦 Outros',
 ];
 
+const CATEGORIES_JOAO = [
+  '💰 Receita João',
+  '🔧 Ferramentas', '📊 Contadora',
+  '📣 Tráfego', '📈 Investimentos', '📦 Outros',
+];
+
 const CATEGORIES_AGENCIA = [
   '🔧 Ferramentas', '⚖️ Advogados', '📦 Outros',
 ];
@@ -24,7 +30,7 @@ function formatCurrency(v) {
 }
 
 export default function GastosFixos({ context = 'casa' }) {
-  const CATEGORIES = context === 'agencia' ? CATEGORIES_AGENCIA : context === 'empresa' ? CATEGORIES_EMPRESA : CATEGORIES_CASA;
+  const CATEGORIES = context === 'agencia' ? CATEGORIES_AGENCIA : context === 'empresa' ? CATEGORIES_EMPRESA : context === 'joao' ? CATEGORIES_JOAO : CATEGORIES_CASA;
   const defaultPerson = context === 'agencia' ? 'Creatorizando' : context === 'empresa' ? 'Carol' : 'JOTAPE';
   const EMPTY = { description: '', amount: '', category: CATEGORIES[0], person: defaultPerson, dayOfMonth: 1, active: true };
 
@@ -90,10 +96,10 @@ export default function GastosFixos({ context = 'casa' }) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-gray-900">
-            {context === 'agencia' ? '🎨 Gastos Fixos Agência' : context === 'empresa' ? '💼 Gastos Fixos Empresa' : '🏠 Gastos Fixos Casa'}
+            {context === 'agencia' ? '🎨 Gastos Fixos Agência' : context === 'empresa' ? '💼 Gastos Fixos Empresa' : context === 'joao' ? '💼 Gastos Fixos João' : '🏠 Gastos Fixos Casa'}
           </h2>
           <p className="text-sm text-gray-500">
-            {context === 'agencia' ? 'Despesas fixas da Creatorizando' : context === 'empresa' ? 'Assinaturas e mensalidades da empresa' : 'Despesas recorrentes mensais'}
+            {context === 'agencia' ? 'Despesas fixas da Creatorizando' : context === 'empresa' ? 'Assinaturas e mensalidades da empresa' : context === 'joao' ? 'Assinaturas e mensalidades do João' : 'Despesas recorrentes mensais'}
           </p>
         </div>
         <button className="btn-primary" onClick={openNew}>+ Novo Gasto Fixo</button>
@@ -131,7 +137,7 @@ export default function GastosFixos({ context = 'casa' }) {
                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
-            {context !== 'agencia' && (
+            {context !== 'agencia' && context !== 'joao' && (
               <div>
                 <label className="label">Responsável</label>
                 <div className="flex gap-2">

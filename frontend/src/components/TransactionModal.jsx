@@ -15,6 +15,12 @@ const CATEGORIES_EMPRESA = [
   '📣 Tráfego', '📈 Investimentos', '📦 Outros',
 ];
 
+const CATEGORIES_JOAO = [
+  '💰 Receita João',
+  '🔧 Ferramentas', '📊 Contadora',
+  '📣 Tráfego', '📈 Investimentos', '📦 Outros',
+];
+
 const CATEGORIES_AGENCIA_GASTO = [
   '👤 Creators', '👩‍💼 Colaboradoras', '🔧 Ferramentas',
   '⚖️ Advogados', '🏛️ Imposto', '📊 Contadora', '📦 Outros',
@@ -25,21 +31,25 @@ const CATEGORIES_AGENCIA_RECEITA = ['💰 Receita de Clientes'];
 export default function TransactionModal({ transaction, onClose, onSave, context = 'casa' }) {
   const isEdit = !!transaction?.id;
   const isAgencia = context === 'agencia';
+  const isJoao = context === 'joao';
 
   function getCategoriesByType(type) {
     if (isAgencia) return type === 'receita' ? CATEGORIES_AGENCIA_RECEITA : CATEGORIES_AGENCIA_GASTO;
     if (context === 'empresa') return CATEGORIES_EMPRESA;
+    if (isJoao) return CATEGORIES_JOAO;
     return CATEGORIES_CASA;
   }
 
   const CATEGORIES = getCategoriesByType('gasto');
 
+  const defaultPerson = isAgencia ? 'Creatorizando' : context === 'empresa' ? 'Carol' : 'JOTAPE';
+
   const [form, setForm] = useState({
     amount: '',
     description: '',
     category: CATEGORIES[0],
-    type: isAgencia ? 'gasto' : context === 'empresa' ? 'receita' : 'gasto',
-    person: isAgencia ? 'Creatorizando' : context === 'empresa' ? 'Carol' : 'JOTAPE',
+    type: isAgencia ? 'gasto' : (context === 'empresa' || isJoao) ? 'receita' : 'gasto',
+    person: defaultPerson,
     date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
   });
 
@@ -50,7 +60,7 @@ export default function TransactionModal({ transaction, onClose, onSave, context
         description: transaction.description || '',
         category: transaction.category || getCategoriesByType(transaction.type || 'gasto')[0],
         type: transaction.type || 'gasto',
-        person: transaction.person || (isAgencia ? 'Creatorizando' : context === 'empresa' ? 'Carol' : 'JOTAPE'),
+        person: transaction.person || defaultPerson,
         // Usar ISO UTC para evitar que timezone do navegador desloque a data para outro mês
         date: transaction.date
           ? new Date(transaction.date).toISOString().slice(0, 16)
@@ -117,7 +127,7 @@ export default function TransactionModal({ transaction, onClose, onSave, context
             </select>
           </div>
 
-          {!isAgencia && context !== 'empresa' && (
+          {!isAgencia && context !== 'empresa' && !isJoao && (
             <div>
               <label className="label">Quem pagou</label>
               <div className="flex gap-3">
