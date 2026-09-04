@@ -88,7 +88,7 @@ export default function AgenciaDashboard() {
       {/* Header da agência */}
       <div className="rounded-2xl p-6 text-white overflow-hidden relative" style={{ background: 'linear-gradient(135deg, #0d1b3e 0%, #1a2d5a 50%, #c45825 100%)' }}>
         <div className="absolute top-2 right-8 text-white/10 text-8xl font-black select-none" style={{ fontFamily: 'serif' }}>✦</div>
-        <p className="text-xs tracking-[0.2em] text-white/50 uppercase mb-3">✦ Criativamente</p>
+        <p className="text-xs tracking-[0.2em] text-white/50 uppercase mb-3">✦ Agência Creatorizando</p>
         <h1 className="text-2xl font-bold mb-1">Dashboard Financeiro</h1>
         <p className="text-white/60 text-sm">Controle de receitas, gastos e clientes da agência</p>
       </div>

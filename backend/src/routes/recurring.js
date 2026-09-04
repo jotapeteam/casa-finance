@@ -26,8 +26,8 @@ router.get('/preview', async (req, res) => {
     const year = Number(req.query.year) || now.getFullYear();
     const context = req.query.context || 'casa';
 
-    const start = new Date(year, month - 1, 1);
-    const end = new Date(year, month, 1);
+    const start = new Date(Date.UTC(year, month - 1, 1));
+    const end = new Date(Date.UTC(year, month, 1));
 
     const recurring = await prisma.recurringExpense.findMany({
       where: { active: true, context },
@@ -42,16 +42,23 @@ router.get('/preview', async (req, res) => {
       },
     });
 
-    const confirmedIds = new Set(confirmedTxs.map(t => t.recurringExpenseId));
+    // Map por recurringExpenseId para acessar o valor real pago
+    const confirmedTxMap = {};
+    confirmedTxs.forEach(t => { confirmedTxMap[t.recurringExpenseId] = t; });
 
-    const preview = recurring.map(r => ({
-      ...r,
-      confirmed: confirmedIds.has(r.id),
-      dueDate: new Date(year, month - 1, Math.min(r.dayOfMonth, new Date(year, month, 0).getDate())),
-    }));
+    const preview = recurring.map(r => {
+      const tx = confirmedTxMap[r.id];
+      return {
+        ...r,
+        confirmed: tx != null,
+        paidAmount: tx ? tx.amount : null,
+        transactionId: tx ? tx.id : null,
+        dueDate: new Date(year, month - 1, Math.min(r.dayOfMonth, new Date(year, month, 0).getDate())),
+      };
+    });
 
     const totalPrevisto = preview.reduce((s, r) => s + r.amount, 0);
-    const totalConfirmado = preview.filter(r => r.confirmed).reduce((s, r) => s + r.amount, 0);
+    const totalConfirmado = preview.filter(r => r.confirmed).reduce((s, r) => s + r.paidAmount, 0);
     const totalPendente = preview.filter(r => !r.confirmed).reduce((s, r) => s + r.amount, 0);
 
     res.json({ preview, totalPrevisto, totalConfirmado, totalPendente });
@@ -130,7 +137,7 @@ router.post('/:id/confirm', async (req, res) => {
         type: 'gasto',
         source: 'web',
         context: recurring.context || 'casa',
-        date: new Date(year, month - 1, day),
+        date: new Date(Date.UTC(year, month - 1, day, 12, 0, 0)),
         recurringExpenseId: recurring.id,
       },
     });

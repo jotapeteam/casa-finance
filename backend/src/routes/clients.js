@@ -143,7 +143,7 @@ router.post('/:id/payments/:paymentId/confirm', async (req, res) => {
         description: `${payment.client.name} — ${payment.description}`,
         amount: payment.amount,
         category: '💰 Receita de Clientes',
-        person: 'Criativamente',
+        person: 'Creatorizando',
         type: 'receita',
         context: 'agencia',
         source: 'web',

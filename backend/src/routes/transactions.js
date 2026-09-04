@@ -73,7 +73,8 @@ router.put('/:id', async (req, res) => {
         ...(category && { category }),
         ...(type && { type }),
         ...(person && { person }),
-        ...(date && { date: new Date(date) }),
+        // Se a string não tem timezone, tratar como UTC (modal envia ISO UTC sem 'Z')
+        ...(date && { date: new Date(/[Z+]/.test(date) ? date : date + 'Z') }),
       },
     });
 

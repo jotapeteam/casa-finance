@@ -37,6 +37,7 @@ export default function Dashboard({ context = 'casa' }) {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTx, setEditingTx] = useState(null);
+  const [previsaoKey, setPrevisaoKey] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -67,6 +68,7 @@ export default function Dashboard({ context = 'casa' }) {
       }
       setModalOpen(false);
       setEditingTx(null);
+      setPrevisaoKey(k => k + 1);
       load();
     } catch (e) {
       alert('Erro ao salvar transação.');
@@ -76,6 +78,7 @@ export default function Dashboard({ context = 'casa' }) {
   async function handleDelete(id) {
     if (!confirm('Tem certeza que deseja excluir esta transação?')) return;
     await deleteTransaction(id);
+    setPrevisaoKey(k => k + 1);
     load();
   }
 
@@ -156,7 +159,7 @@ export default function Dashboard({ context = 'casa' }) {
       )}
 
       {/* Previsão de gastos fixos */}
-      <PrevisaoMes month={month} year={year} onConfirmed={load} context={context} />
+      <PrevisaoMes month={month} year={year} onConfirmed={load} context={context} refreshKey={previsaoKey} />
 
       {/* Tabela */}
       <TransactionTable transactions={transactions} onEdit={openEdit} onDelete={handleDelete} />

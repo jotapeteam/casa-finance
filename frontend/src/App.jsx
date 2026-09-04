@@ -3,6 +3,8 @@ import Dashboard from './pages/Dashboard.jsx';
 import GastosFixos from './pages/GastosFixos.jsx';
 import AgenciaDashboard from './pages/AgenciaDashboard.jsx';
 import AgenciaClientes from './pages/AgenciaClientes.jsx';
+import AgenciaPrestadores from './pages/AgenciaPrestadores.jsx';
+import AgenciaObrigacoes from './pages/AgenciaObrigacoes.jsx';
 import Login from './pages/Login.jsx';
 
 const TAB_GROUPS = [
@@ -26,12 +28,14 @@ const TAB_GROUPS = [
   },
   {
     id: 'agencia',
-    label: '🎨 Criativamente',
+    label: '🎨 Agência Creatorizando',
     color: 'purple',
     tabs: [
       { id: 'agencia', label: 'Dashboard' },
       { id: 'agencia-clientes', label: 'Clientes' },
       { id: 'agencia-fixos', label: 'Gastos Fixos' },
+      { id: 'agencia-prestadores', label: 'Prestadores' },
+      { id: 'agencia-obrigacoes', label: 'Obrigações' },
     ],
   },
 ];
@@ -58,14 +62,13 @@ export default function App() {
         <div className="flex items-center gap-3">
           {isAgencia ? (
             <span className="text-2xl font-bold tracking-widest text-white/90 uppercase" style={{ letterSpacing: '0.15em', fontSize: '11px' }}>
-              ✦ CRIATIVAMENTE
+              ✦ AGÊNCIA CREATORIZANDO
             </span>
           ) : (
             <>
-              <span className="text-2xl">🏠</span>
+              <span className="text-2xl">💼</span>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Casa Finance</h1>
-                <p className="text-xs text-gray-500">Gestão financeira familiar</p>
+                <h1 className="text-xl font-bold text-gray-900">Gestão financeira empresarial e familiar</h1>
               </div>
             </>
           )}
@@ -73,7 +76,7 @@ export default function App() {
         <div className="flex items-center gap-3">
           <div className={`flex items-center gap-2 text-sm ${isAgencia ? 'text-white/60' : 'text-gray-500'}`}>
             <span className="w-2 h-2 rounded-full bg-green-400 inline-block"></span>
-            {isAgencia ? 'Criativamente' : 'JOTAPE & Carol'}
+            {isAgencia ? 'Creatorizando' : 'JOTAPE & Carol'}
           </div>
           <button onClick={handleLogout} className={`text-xs transition-colors ${isAgencia ? 'text-white/50 hover:text-white' : 'text-gray-400 hover:text-gray-600'}`}>
             Sair
@@ -138,6 +141,8 @@ export default function App() {
         {activeTab === 'agencia' && <AgenciaDashboard />}
         {activeTab === 'agencia-clientes' && <AgenciaClientes />}
         {activeTab === 'agencia-fixos' && <GastosFixos context="agencia" />}
+        {activeTab === 'agencia-prestadores' && <AgenciaPrestadores />}
+        {activeTab === 'agencia-obrigacoes' && <AgenciaObrigacoes />}
       </main>
     </div>
   );

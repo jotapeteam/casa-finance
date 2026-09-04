@@ -26,7 +26,7 @@ function formatCurrency(v) {
 
 export default function GastosFixos({ context = 'casa' }) {
   const CATEGORIES = context === 'agencia' ? CATEGORIES_AGENCIA : context === 'empresa' ? CATEGORIES_EMPRESA : CATEGORIES_CASA;
-  const defaultPerson = context === 'agencia' ? 'Criativamente' : 'JOTAPE';
+  const defaultPerson = context === 'agencia' ? 'Creatorizando' : 'JOTAPE';
   const EMPTY = { description: '', amount: '', category: CATEGORIES[0], person: defaultPerson, dayOfMonth: 1, active: true };
 
   const [list, setList] = useState([]);
@@ -94,7 +94,7 @@ export default function GastosFixos({ context = 'casa' }) {
             {context === 'agencia' ? '🎨 Gastos Fixos Agência' : context === 'empresa' ? '💼 Gastos Fixos Empresa' : '🏠 Gastos Fixos Casa'}
           </h2>
           <p className="text-sm text-gray-500">
-            {context === 'agencia' ? 'Despesas fixas da Criativamente' : context === 'empresa' ? 'Assinaturas e mensalidades da empresa' : 'Despesas recorrentes mensais'}
+            {context === 'agencia' ? 'Despesas fixas da Creatorizando' : context === 'empresa' ? 'Assinaturas e mensalidades da empresa' : 'Despesas recorrentes mensais'}
           </p>
         </div>
         <button className="btn-primary" onClick={openNew}>+ Novo Gasto Fixo</button>

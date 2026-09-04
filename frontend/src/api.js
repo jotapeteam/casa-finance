@@ -35,7 +35,7 @@ export const updateRecurring = (id, data) => api.put(`/recurring/${id}`, data).t
 export const deleteRecurring = (id) => api.delete(`/recurring/${id}`).then(r => r.data);
 export const confirmRecurring = (id, params) => api.post(`/recurring/${id}/confirm`, null, { params }).then(r => r.data);
 
-// Clients (Agência Criativamente)
+// Clients (Agência Creatorizando)
 export const getClients = () => api.get('/clients').then(r => r.data);
 export const getClientsForecast = (months = 4) => api.get('/clients/forecast', { params: { months } }).then(r => r.data);
 export const createClient = (data) => api.post('/clients', data).then(r => r.data);

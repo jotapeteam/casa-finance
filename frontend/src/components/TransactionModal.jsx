@@ -39,7 +39,7 @@ export default function TransactionModal({ transaction, onClose, onSave, context
     description: '',
     category: CATEGORIES[0],
     type: isAgencia ? 'gasto' : context === 'empresa' ? 'receita' : 'gasto',
-    person: isAgencia ? 'Criativamente' : 'JOTAPE',
+    person: isAgencia ? 'Creatorizando' : 'JOTAPE',
     date: format(new Date(), "yyyy-MM-dd'T'HH:mm"),
   });
 
@@ -50,9 +50,10 @@ export default function TransactionModal({ transaction, onClose, onSave, context
         description: transaction.description || '',
         category: transaction.category || getCategoriesByType(transaction.type || 'gasto')[0],
         type: transaction.type || 'gasto',
-        person: transaction.person || (isAgencia ? 'Criativamente' : 'JOTAPE'),
+        person: transaction.person || (isAgencia ? 'Creatorizando' : 'JOTAPE'),
+        // Usar ISO UTC para evitar que timezone do navegador desloque a data para outro mês
         date: transaction.date
-          ? format(new Date(transaction.date), "yyyy-MM-dd'T'HH:mm")
+          ? new Date(transaction.date).toISOString().slice(0, 16)
           : format(new Date(), "yyyy-MM-dd'T'HH:mm"),
       });
     }

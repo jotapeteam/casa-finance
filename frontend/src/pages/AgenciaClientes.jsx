@@ -257,7 +257,7 @@ export default function AgenciaClientes() {
         <div className="absolute top-2 right-8 text-white/10 text-8xl font-black select-none" style={{ fontFamily: 'serif' }}>✦</div>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs tracking-[0.2em] text-white/50 uppercase mb-2">✦ Criativamente</p>
+            <p className="text-xs tracking-[0.2em] text-white/50 uppercase mb-2">✦ Agência Creatorizando</p>
             <h1 className="text-xl font-bold">Clientes</h1>
             <p className="text-white/60 text-sm mt-0.5">Contratos e recebimentos</p>
           </div>

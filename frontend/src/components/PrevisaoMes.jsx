@@ -7,7 +7,7 @@ function formatCurrency(v) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 }
 
-export default function PrevisaoMes({ month, year, onConfirmed, context = 'casa' }) {
+export default function PrevisaoMes({ month, year, onConfirmed, context = 'casa', refreshKey = 0 }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -23,7 +23,7 @@ export default function PrevisaoMes({ month, year, onConfirmed, context = 'casa'
     }
   }
 
-  useEffect(() => { load(); }, [month, year]);
+  useEffect(() => { load(); }, [month, year, refreshKey]);
 
   async function handleConfirm(id) {
     await confirmRecurring(id, { month, year });
@@ -87,7 +87,14 @@ export default function PrevisaoMes({ month, year, onConfirmed, context = 'casa'
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <span className="font-semibold text-sm text-gray-800">{formatCurrency(r.amount)}</span>
+                <div className="text-right">
+                  <span className="font-semibold text-sm text-gray-800">
+                    {r.confirmed && r.paidAmount != null ? formatCurrency(r.paidAmount) : formatCurrency(r.amount)}
+                  </span>
+                  {r.confirmed && r.paidAmount != null && r.paidAmount !== r.amount && (
+                    <p className="text-xs text-gray-400 line-through">{formatCurrency(r.amount)}</p>
+                  )}
+                </div>
                 {r.confirmed ? (
                   <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">✓ Pago</span>
                 ) : (
