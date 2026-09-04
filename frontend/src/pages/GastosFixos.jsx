@@ -12,7 +12,7 @@ const CATEGORIES_CASA = [
 const CATEGORIES_EMPRESA = [
   '💰 Receita Carol',
   '🔧 Ferramentas', '📊 Contadora',
-  '👩‍💼 Colaboradora', '📣 Tráfego', '📈 Investimentos', '📦 Outros',
+  '📣 Tráfego', '📈 Investimentos', '📦 Outros',
 ];
 
 const CATEGORIES_AGENCIA = [
