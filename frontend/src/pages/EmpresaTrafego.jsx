@@ -4,29 +4,29 @@ import { ptBR } from 'date-fns/locale';
 
 const SK = 'carol_trafego';
 const TIPOS = ['Gerenciador de Anúncios', 'Posts Turbinados'];
-const PLATAFORMAS = ['Meta Ads', 'Google Ads', 'TikTok Ads', 'Outro'];
 
 function fmt(v) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 }
 function monthKey(d) { return format(d, 'yyyy-MM'); }
 
-const EMPTY = { tipo: TIPOS[0], plataforma: PLATAFORMAS[0], valor: '', data: format(new Date(), 'yyyy-MM-dd'), descricao: '' };
+const today = format(new Date(), 'yyyy-MM-dd');
+const EMPTY = { tipo: TIPOS[0], valor: '', dataInicio: today, dataFim: today, descricao: '' };
 
 export default function EmpresaTrafego() {
-  const [list, setList]       = useState(() => { try { return JSON.parse(localStorage.getItem(SK) || '[]'); } catch { return []; } });
-  const [form, setForm]       = useState(EMPTY);
-  const [editId, setEditId]   = useState(null);
+  const [list, setList]         = useState(() => { try { return JSON.parse(localStorage.getItem(SK) || '[]'); } catch { return []; } });
+  const [form, setForm]         = useState(EMPTY);
+  const [editId, setEditId]     = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
 
   useEffect(() => { localStorage.setItem(SK, JSON.stringify(list)); }, [list]);
 
   const mk = monthKey(currentDate);
-  const mes = list.filter(i => i.data?.slice(0, 7) === mk);
+  const mes = list.filter(i => i.dataInicio?.slice(0, 7) === mk || i.dataFim?.slice(0, 7) === mk);
 
   function save() {
-    if (!form.valor || !form.data) return;
+    if (!form.valor || !form.dataInicio) return;
     const item = { ...form, valor: parseFloat(String(form.valor).replace(',', '.')) || 0 };
     if (editId !== null) {
       setList(l => l.map(i => i.id === editId ? { ...i, ...item } : i));
@@ -37,32 +37,40 @@ export default function EmpresaTrafego() {
   }
 
   function openEdit(item) {
-    setForm({ tipo: item.tipo, plataforma: item.plataforma, valor: item.valor, data: item.data, descricao: item.descricao });
+    setForm({ tipo: item.tipo, valor: item.valor, dataInicio: item.dataInicio, dataFim: item.dataFim || item.dataInicio, descricao: item.descricao || '' });
     setEditId(item.id); setShowForm(true);
   }
 
   function remove(id) {
-    if (!confirm('Remover este gasto?')) return;
+    if (!confirm('Remover este lançamento?')) return;
     setList(l => l.filter(i => i.id !== id));
   }
 
   function set(f, v) { setForm(p => ({ ...p, [f]: v })); }
 
-  const totalGeral = mes.reduce((s, i) => s + i.valor, 0);
+  const totalGeral    = mes.reduce((s, i) => s + i.valor, 0);
   const totalAnuncios = mes.filter(i => i.tipo === TIPOS[0]).reduce((s, i) => s + i.valor, 0);
-  const totalPosts = mes.filter(i => i.tipo === TIPOS[1]).reduce((s, i) => s + i.valor, 0);
+  const totalPosts    = mes.filter(i => i.tipo === TIPOS[1]).reduce((s, i) => s + i.valor, 0);
+
+  function fmtPeriodo(item) {
+    const ini = new Date(item.dataInicio + 'T12:00:00').toLocaleDateString('pt-BR');
+    const fim = item.dataFim && item.dataFim !== item.dataInicio
+      ? new Date(item.dataFim + 'T12:00:00').toLocaleDateString('pt-BR')
+      : null;
+    return fim ? `${ini} até ${fim}` : ini;
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-xl font-bold text-gray-900">📣 Gastos com Tráfego</h2>
-          <p className="text-sm text-gray-500">Gerenciador de anúncios e posts turbinados</p>
+          <p className="text-sm text-gray-500">Meta Ads — Gerenciador de anúncios e posts turbinados</p>
         </div>
-        <button className="btn-primary" onClick={() => { setForm(EMPTY); setEditId(null); setShowForm(true); }}>+ Novo Gasto</button>
+        <button className="btn-primary" onClick={() => { setForm(EMPTY); setEditId(null); setShowForm(true); }}>+ Novo Lançamento</button>
       </div>
 
-      {/* Resumo cards */}
+      {/* Cards resumo */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="card flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-xl">📊</div>
@@ -90,7 +98,7 @@ export default function EmpresaTrafego() {
       {/* Formulário */}
       {showForm && (
         <div className="card border-2 border-blue-100">
-          <h3 className="font-bold text-gray-800 mb-4">{editId ? 'Editar Gasto' : 'Novo Gasto de Tráfego'}</h3>
+          <h3 className="font-bold text-gray-800 mb-4">{editId ? 'Editar Lançamento' : 'Novo Lançamento de Tráfego'}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
               <label className="label">Tipo</label>
@@ -104,22 +112,20 @@ export default function EmpresaTrafego() {
               </div>
             </div>
             <div>
-              <label className="label">Valor (R$)</label>
+              <label className="label">Período — De</label>
+              <input className="input" type="date" value={form.dataInicio} onChange={e => set('dataInicio', e.target.value)} />
+            </div>
+            <div>
+              <label className="label">Período — Até</label>
+              <input className="input" type="date" value={form.dataFim} min={form.dataInicio} onChange={e => set('dataFim', e.target.value)} />
+            </div>
+            <div>
+              <label className="label">Valor gasto (R$)</label>
               <input className="input" type="number" step="0.01" min="0" placeholder="0,00" value={form.valor} onChange={e => set('valor', e.target.value)} />
             </div>
             <div>
-              <label className="label">Data</label>
-              <input className="input" type="date" value={form.data} onChange={e => set('data', e.target.value)} />
-            </div>
-            <div>
-              <label className="label">Plataforma</label>
-              <select className="input" value={form.plataforma} onChange={e => set('plataforma', e.target.value)}>
-                {PLATAFORMAS.map(p => <option key={p} value={p}>{p}</option>)}
-              </select>
-            </div>
-            <div>
               <label className="label">Descrição (opcional)</label>
-              <input className="input" placeholder="Ex: Campanha de verão, post do dia 10..." value={form.descricao} onChange={e => set('descricao', e.target.value)} />
+              <input className="input" placeholder="Ex: Campanha de verão, post de reels..." value={form.descricao} onChange={e => set('descricao', e.target.value)} />
             </div>
             <div className="sm:col-span-2 flex gap-3 pt-2">
               <button type="button" onClick={() => setShowForm(false)} className="btn-ghost flex-1">Cancelar</button>
@@ -132,7 +138,7 @@ export default function EmpresaTrafego() {
       {/* Lista mensal */}
       <div className="card">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <h3 className="font-bold text-gray-800">Histórico</h3>
+          <h3 className="font-bold text-gray-800">Lançamentos</h3>
           <div className="flex items-center gap-2">
             <button onClick={() => setCurrentDate(d => subMonths(d, 1))} className="btn-ghost py-1 px-3 text-sm">← Ant.</button>
             <span className="text-sm font-semibold text-gray-700 capitalize px-2">
@@ -145,20 +151,17 @@ export default function EmpresaTrafego() {
         {mes.length === 0 ? (
           <div className="text-center py-8 text-gray-400">
             <p className="text-3xl mb-2">📣</p>
-            <p>Nenhum gasto de tráfego neste mês</p>
+            <p>Nenhum lançamento neste mês</p>
           </div>
         ) : (
           <div className="space-y-2">
-            {mes.sort((a, b) => b.data.localeCompare(a.data)).map(item => (
+            {mes.sort((a, b) => b.dataInicio.localeCompare(a.dataInicio)).map(item => (
               <div key={item.id} className={`flex items-center justify-between p-3 rounded-xl ${item.tipo === TIPOS[0] ? 'bg-blue-50' : 'bg-orange-50'}`}>
                 <div className="flex items-center gap-3">
                   <span className="text-xl">{item.tipo === TIPOS[0] ? '📊' : '⚡'}</span>
                   <div>
                     <p className="font-medium text-sm text-gray-800">{item.tipo}</p>
-                    <p className="text-xs text-gray-400">
-                      {item.plataforma} · {new Date(item.data + 'T12:00:00').toLocaleDateString('pt-BR')}
-                      {item.descricao && ` · ${item.descricao}`}
-                    </p>
+                    <p className="text-xs text-gray-500">{fmtPeriodo(item)}{item.descricao ? ` · ${item.descricao}` : ''}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -168,6 +171,10 @@ export default function EmpresaTrafego() {
                 </div>
               </div>
             ))}
+            <div className="pt-3 border-t border-gray-100 flex justify-between text-sm">
+              <span className="text-gray-500">Total do mês:</span>
+              <span className="font-bold text-red-600 text-base">{fmt(totalGeral)}</span>
+            </div>
           </div>
         )}
       </div>
