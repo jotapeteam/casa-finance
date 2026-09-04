@@ -220,7 +220,7 @@ router.post('/:id/payments', async (req, res) => {
 // POST /api/clients/:id/costs - adicionar custo
 router.post('/:id/costs', async (req, res) => {
   try {
-    const { description, amount, category, date } = req.body;
+    const { description, amount, category, date, referenceMonth } = req.body;
     const cost = await prisma.clientCost.create({
       data: {
         clientId: Number(req.params.id),
@@ -228,6 +228,7 @@ router.post('/:id/costs', async (req, res) => {
         amount: Number(amount),
         category: category || 'Outros',
         date: date ? new Date(date) : new Date(),
+        referenceMonth: referenceMonth || format(new Date(), 'yyyy-MM'),
       },
     });
     res.json(cost);
@@ -239,7 +240,7 @@ router.post('/:id/costs', async (req, res) => {
 // PUT /api/clients/:id/costs/:costId - editar custo
 router.put('/:id/costs/:costId', async (req, res) => {
   try {
-    const { description, amount, category, date } = req.body;
+    const { description, amount, category, date, referenceMonth } = req.body;
     const cost = await prisma.clientCost.update({
       where: { id: Number(req.params.costId) },
       data: {
@@ -247,6 +248,7 @@ router.put('/:id/costs/:costId', async (req, res) => {
         amount: Number(amount),
         category: category || 'Outros',
         date: date ? new Date(date) : undefined,
+        referenceMonth: referenceMonth || undefined,
       },
     });
     res.json(cost);

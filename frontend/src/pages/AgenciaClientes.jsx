@@ -87,7 +87,7 @@ function PaymentRow({ payment, onConfirm, onUnconfirm }) {
 
 const COST_CATEGORIES = ['👤 Creators', '🎬 Produção', '🔧 Ferramentas', '📦 Outros'];
 
-function ClientCard({ client, onRefresh, onDelete }) {
+function ClientCard({ client, onRefresh, onDelete, month, year }) {
   const [expanded, setExpanded] = useState(false);
   const [editingStatus, setEditingStatus] = useState(false);
   const [addingPayments, setAddingPayments] = useState(false);
@@ -97,17 +97,28 @@ function ClientCard({ client, onRefresh, onDelete }) {
   const [showCosts, setShowCosts] = useState(false);
   const [addingCost, setAddingCost] = useState(false);
   const [editingCostId, setEditingCostId] = useState(null);
-  const EMPTY_COST = { description: '', amount: '', category: COST_CATEGORIES[0], date: new Date().toISOString().slice(0, 10) };
+  const refMonthDefault = `${year}-${String(month).padStart(2, '0')}`;
+  const EMPTY_COST = { description: '', amount: '', category: COST_CATEGORIES[0], date: new Date().toISOString().slice(0, 10), referenceMonth: refMonthDefault };
   const [costForm, setCostForm] = useState(EMPTY_COST);
 
   const costs = client.costs || [];
-  const totalCosts = costs.reduce((s, c) => s + c.amount, 0);
+  const mk = `${year}-${String(month).padStart(2, '0')}`;
+  // Custos do mês de referência selecionado
+  const costsThisMonth = costs.filter(c => c.referenceMonth === mk);
+  const totalCosts = costsThisMonth.reduce((s, c) => s + c.amount, 0);
+  const allCosts = costs; // todos, para exibição
 
   const total = client.payments.reduce((s, p) => s + p.amount, 0);
-  const received = client.payments.filter(p => p.paid).reduce((s, p) => s + p.amount, 0);
+  const receivedTotal = client.payments.filter(p => p.paid).reduce((s, p) => s + p.amount, 0); // para barra de progresso
+  const pct = total > 0 ? (receivedTotal / total) * 100 : 0;
+  // Recebido no mês selecionado (para líquido)
+  const received = client.payments.filter(p => {
+    if (!p.paid || !p.paidAt) return false;
+    const d = new Date(p.paidAt);
+    return d.getMonth() + 1 === month && d.getFullYear() === year;
+  }).reduce((s, p) => s + p.amount, 0);
   const liquido = received - totalCosts;
   const pending = client.payments.filter(p => !p.paid).length;
-  const pct = total > 0 ? (received / total) * 100 : 0;
 
   async function handleSaveCost(e) {
     e.preventDefault();
@@ -129,6 +140,7 @@ function ClientCard({ client, onRefresh, onDelete }) {
       amount: cost.amount,
       category: cost.category,
       date: new Date(cost.date).toISOString().slice(0, 10),
+      referenceMonth: cost.referenceMonth || refMonthDefault,
     });
     setEditingCostId(cost.id);
     setAddingCost(true);
@@ -206,7 +218,7 @@ function ClientCard({ client, onRefresh, onDelete }) {
           {/* Barra de progresso */}
           <div className="mb-2">
             <div className="flex justify-between text-xs text-gray-500 mb-1">
-              <span>Recebido: {fmt(received)}</span>
+              <span>Recebido: {fmt(receivedTotal)}</span>
               <span>Total: {fmt(total)}</span>
             </div>
             <div className="w-full bg-gray-100 rounded-full h-1.5">
@@ -312,16 +324,11 @@ function ClientCard({ client, onRefresh, onDelete }) {
               <button onClick={() => setShowCosts(!showCosts)}
                 className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-gray-900">
                 <span>💸 Custos da campanha</span>
-                <span className="text-xs text-gray-400">({costs.length})</span>
+                <span className="text-xs text-gray-400">({allCosts.length})</span>
                 <span className="text-xs">{showCosts ? '▲' : '▼'}</span>
               </button>
-              <div className="flex items-center gap-3 text-xs">
-                {totalCosts > 0 && (
-                  <span className="text-gray-500">Total custos: <strong className="text-red-600">{fmt(totalCosts)}</strong></span>
-                )}
-                <button onClick={() => { setCostForm(EMPTY_COST); setEditingCostId(null); setAddingCost(true); setShowCosts(true); }}
-                  className="text-orange-600 hover:underline font-medium">+ Lançar custo</button>
-              </div>
+              <button onClick={() => { setCostForm({ ...EMPTY_COST, referenceMonth: refMonthDefault }); setEditingCostId(null); setAddingCost(true); setShowCosts(true); }}
+                className="text-xs text-orange-600 hover:underline font-medium">+ Lançar custo</button>
             </div>
 
             {showCosts && (
@@ -335,11 +342,17 @@ function ClientCard({ client, onRefresh, onDelete }) {
                         value={costForm.description} onChange={e => setCostForm(f => ({ ...f, description: e.target.value }))} required />
                       <input className="input text-sm" type="number" step="0.01" min="0.01" placeholder="Valor (R$)"
                         value={costForm.amount} onChange={e => setCostForm(f => ({ ...f, amount: e.target.value }))} required />
-                      <input className="input text-sm" type="date"
+                      <input className="input text-sm" type="date" title="Data do pagamento"
                         value={costForm.date} onChange={e => setCostForm(f => ({ ...f, date: e.target.value }))} required />
                       <select className="input text-sm col-span-2" value={costForm.category} onChange={e => setCostForm(f => ({ ...f, category: e.target.value }))}>
                         {COST_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                       </select>
+                      <div className="col-span-2">
+                        <label className="text-xs text-gray-500 block mb-1">Mês de referência (competência)</label>
+                        <input className="input text-sm" type="month"
+                          value={costForm.referenceMonth}
+                          onChange={e => setCostForm(f => ({ ...f, referenceMonth: e.target.value }))} required />
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <button type="button" onClick={() => { setAddingCost(false); setEditingCostId(null); }} className="btn-ghost text-xs flex-1">Cancelar</button>
@@ -350,42 +363,57 @@ function ClientCard({ client, onRefresh, onDelete }) {
                   </form>
                 )}
 
-                {/* Lista de custos */}
-                {costs.length === 0 && !addingCost ? (
+                {/* Lista de todos os custos */}
+                {allCosts.length === 0 && !addingCost ? (
                   <p className="text-xs text-gray-400 text-center py-2">Nenhum custo lançado ainda</p>
                 ) : (
-                  costs.map(cost => (
-                    <div key={cost.id} className="flex items-center justify-between bg-red-50 rounded-xl px-3 py-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">{cost.category.split(' ')[0]}</span>
-                        <div>
-                          <p className="text-sm font-medium text-gray-800">{cost.description}</p>
-                          <p className="text-xs text-gray-400">{cost.category.replace(/^\S+\s/, '')} · {new Date(cost.date).toLocaleDateString('pt-BR')}</p>
+                  allCosts.map(cost => {
+                    const isRefMonth = cost.referenceMonth === mk;
+                    return (
+                      <div key={cost.id} className={`flex items-center justify-between rounded-xl px-3 py-2 ${isRefMonth ? 'bg-red-50' : 'bg-gray-50 opacity-60'}`}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">{cost.category.split(' ')[0]}</span>
+                          <div>
+                            <p className="text-sm font-medium text-gray-800">{cost.description}</p>
+                            <p className="text-xs text-gray-400">
+                              {cost.category.replace(/^\S+\s/, '')} · pago em {new Date(cost.date).toLocaleDateString('pt-BR')}
+                              {cost.referenceMonth && (
+                                <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs font-medium ${isRefMonth ? 'bg-orange-100 text-orange-700' : 'bg-gray-200 text-gray-500'}`}>
+                                  ref. {cost.referenceMonth.slice(5, 7)}/{cost.referenceMonth.slice(0, 4)}
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-red-600 text-sm">{fmt(cost.amount)}</span>
+                          <button onClick={() => openEditCost(cost)} className="btn-ghost text-xs py-1 px-1.5">✏️</button>
+                          <button onClick={() => handleDeleteCost(cost.id)} className="btn-ghost text-xs py-1 px-1.5 hover:text-red-500">🗑️</button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-red-600 text-sm">{fmt(cost.amount)}</span>
-                        <button onClick={() => openEditCost(cost)} className="btn-ghost text-xs py-1 px-1.5">✏️</button>
-                        <button onClick={() => handleDeleteCost(cost.id)} className="btn-ghost text-xs py-1 px-1.5 hover:text-red-500">🗑️</button>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
 
-                {/* Resumo financeiro */}
+                {/* Resumo financeiro do mês selecionado */}
                 {(received > 0 || totalCosts > 0) && (
-                  <div className="mt-3 pt-3 border-t border-gray-200 grid grid-cols-3 gap-2 text-center">
-                    <div className="bg-green-50 rounded-xl p-2">
-                      <p className="text-xs text-gray-500 mb-0.5">Recebido</p>
-                      <p className="font-bold text-green-700 text-sm">{fmt(received)}</p>
-                    </div>
-                    <div className="bg-red-50 rounded-xl p-2">
-                      <p className="text-xs text-gray-500 mb-0.5">Custos</p>
-                      <p className="font-bold text-red-600 text-sm">{fmt(totalCosts)}</p>
-                    </div>
-                    <div className={`rounded-xl p-2 ${liquido >= 0 ? 'bg-blue-50' : 'bg-red-100'}`}>
-                      <p className="text-xs text-gray-500 mb-0.5">Líquido</p>
-                      <p className={`font-bold text-sm ${liquido >= 0 ? 'text-blue-700' : 'text-red-700'}`}>{fmt(liquido)}</p>
+                  <div className="mt-3 pt-3 border-t border-gray-200">
+                    <p className="text-xs text-gray-400 mb-2 text-center capitalize">
+                      Resultado de {format(new Date(year, month - 1, 1), 'MMMM yyyy', { locale: ptBR })}
+                    </p>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="bg-green-50 rounded-xl p-2">
+                        <p className="text-xs text-gray-500 mb-0.5">Recebido</p>
+                        <p className="font-bold text-green-700 text-sm">{fmt(received)}</p>
+                      </div>
+                      <div className="bg-red-50 rounded-xl p-2">
+                        <p className="text-xs text-gray-500 mb-0.5">Custos</p>
+                        <p className="font-bold text-red-600 text-sm">{fmt(totalCosts)}</p>
+                      </div>
+                      <div className={`rounded-xl p-2 ${liquido >= 0 ? 'bg-blue-50' : 'bg-red-100'}`}>
+                        <p className="text-xs text-gray-500 mb-0.5">Líquido</p>
+                        <p className={`font-bold text-sm ${liquido >= 0 ? 'text-blue-700' : 'text-red-700'}`}>{fmt(liquido)}</p>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -546,7 +574,7 @@ export default function AgenciaClientes() {
       ) : (
         <div className="space-y-4">
           {filtered.map(client => (
-            <ClientCard key={client.id} client={client} onRefresh={load} onDelete={handleDelete} />
+            <ClientCard key={client.id} client={client} onRefresh={load} onDelete={handleDelete} month={month} year={year} />
           ))}
         </div>
       )}

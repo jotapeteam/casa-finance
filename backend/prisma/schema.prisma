@@ -55,15 +55,16 @@ model Client {
 }
 
 model ClientCost {
-  id          Int      @id @default(autoincrement())
-  clientId    Int
-  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  description String
-  amount      Float
-  category    String   @default("Outros")
-  date        DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             Int      @id @default(autoincrement())
+  clientId       Int
+  client         Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  description    String
+  amount         Float
+  category       String   @default("Outros")
+  date           DateTime @default(now())
+  referenceMonth String   @default("") // yyyy-MM do mês que o custo pertence
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@index([clientId])
 }
