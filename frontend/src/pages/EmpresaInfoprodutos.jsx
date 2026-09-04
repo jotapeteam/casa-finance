@@ -10,7 +10,7 @@ function fmt(v) {
 function monthKey(d) { return format(d, 'yyyy-MM'); }
 
 const today = format(new Date(), 'yyyy-MM-dd');
-const EMPTY = { produto: '', valor: '', data: today };
+const EMPTY = { produto: '', valor: '', dataInicio: today, dataFim: today };
 
 export default function EmpresaInfoprodutos() {
   const [list, setList]         = useState(() => { try { return JSON.parse(localStorage.getItem(SK) || '[]'); } catch { return []; } });
@@ -22,11 +22,19 @@ export default function EmpresaInfoprodutos() {
   useEffect(() => { localStorage.setItem(SK, JSON.stringify(list)); }, [list]);
 
   const mk = monthKey(currentDate);
-  const mes = list.filter(i => i.data?.slice(0, 7) === mk);
+  const mes = list.filter(i => i.dataInicio?.slice(0, 7) === mk || i.dataFim?.slice(0, 7) === mk);
   const totalMes = mes.reduce((s, i) => s + i.valor, 0);
 
+  function fmtPeriodo(item) {
+    const ini = new Date(item.dataInicio + 'T12:00:00').toLocaleDateString('pt-BR');
+    const fim = item.dataFim && item.dataFim !== item.dataInicio
+      ? new Date(item.dataFim + 'T12:00:00').toLocaleDateString('pt-BR')
+      : null;
+    return fim ? `${ini} até ${fim}` : ini;
+  }
+
   function save() {
-    if (!form.produto.trim() || !form.valor || !form.data) return;
+    if (!form.produto.trim() || !form.valor || !form.dataInicio) return;
     const item = { ...form, valor: parseFloat(String(form.valor).replace(',', '.')) || 0 };
     if (editId !== null) {
       setList(l => l.map(i => i.id === editId ? { ...i, ...item } : i));
@@ -37,7 +45,7 @@ export default function EmpresaInfoprodutos() {
   }
 
   function openEdit(item) {
-    setForm({ produto: item.produto, valor: item.valor, data: item.data });
+    setForm({ produto: item.produto, valor: item.valor, dataInicio: item.dataInicio || item.data || today, dataFim: item.dataFim || item.dataInicio || item.data || today });
     setEditId(item.id); setShowForm(true);
   }
 
@@ -82,9 +90,13 @@ export default function EmpresaInfoprodutos() {
               <label className="label">Valor (R$)</label>
               <input className="input" type="number" step="0.01" min="0" placeholder="0,00" value={form.valor} onChange={e => set('valor', e.target.value)} />
             </div>
-            <div className="sm:col-span-2">
-              <label className="label">Data de referência</label>
-              <input className="input" type="date" value={form.data} onChange={e => set('data', e.target.value)} />
+            <div>
+              <label className="label">Período — De</label>
+              <input className="input" type="date" value={form.dataInicio} onChange={e => set('dataInicio', e.target.value)} />
+            </div>
+            <div>
+              <label className="label">Período — Até</label>
+              <input className="input" type="date" value={form.dataFim} min={form.dataInicio} onChange={e => set('dataFim', e.target.value)} />
             </div>
             <div className="sm:col-span-3 flex gap-3 pt-2">
               <button type="button" onClick={() => setShowForm(false)} className="btn-ghost flex-1">Cancelar</button>
@@ -114,13 +126,13 @@ export default function EmpresaInfoprodutos() {
           </div>
         ) : (
           <div className="space-y-2">
-            {mes.sort((a, b) => b.data.localeCompare(a.data)).map(item => (
+            {mes.sort((a, b) => b.dataInicio.localeCompare(a.dataInicio)).map(item => (
               <div key={item.id} className="flex items-center justify-between p-3 bg-green-50 rounded-xl">
                 <div className="flex items-center gap-3">
                   <span className="text-xl">🎓</span>
                   <div>
                     <p className="font-medium text-sm text-gray-800">{item.produto}</p>
-                    <p className="text-xs text-gray-400">{new Date(item.data + 'T12:00:00').toLocaleDateString('pt-BR')}</p>
+                    <p className="text-xs text-gray-400">{fmtPeriodo(item)}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
