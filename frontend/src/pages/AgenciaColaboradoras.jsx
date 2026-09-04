@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { format, addMonths, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { createTransaction, deleteTransaction } from '../api.js';
 
 function fmt(v) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
@@ -60,10 +61,41 @@ export default function AgenciaColaboradoras() {
   function set(f, v) { setForm(prev => ({ ...prev, [f]: v })); }
 
   /* ── PAGAMENTOS BASE ── */
-  function isPago(colabId) { return !!(pagtos[mk]?.[colabId]); }
+  function isPago(colabId) {
+    const val = pagtos[mk]?.[colabId];
+    return !!(val === true || val?.pago);
+  }
 
-  function togglePagamento(colabId) {
-    setPagtos(p => ({ ...p, [mk]: { ...(p[mk] || {}), [colabId]: !p[mk]?.[colabId] } }));
+  async function togglePagamento(colabId) {
+    const c = list.find(x => x.id === colabId);
+    const currently = pagtos[mk]?.[colabId];
+    const wasPago = !!(currently === true || currently?.pago);
+
+    if (wasPago) {
+      const txId = currently?.transactionId;
+      if (txId) { try { await deleteTransaction(txId); } catch {} }
+      setPagtos(p => {
+        const mk_data = { ...(p[mk] || {}) };
+        delete mk_data[colabId];
+        return { ...p, [mk]: mk_data };
+      });
+    } else {
+      let txId = null;
+      try {
+        const tx = await createTransaction({
+          description: `${c.name} — ${format(currentDate, 'MMMM/yyyy', { locale: ptBR })}`,
+          amount: c.amount,
+          type: 'gasto',
+          category: '👩‍💼 Colaboradoras',
+          person: 'Creatorizando',
+          context: 'agencia',
+          source: 'web',
+          date: new Date().toISOString(),
+        });
+        txId = tx.id;
+      } catch {}
+      setPagtos(p => ({ ...p, [mk]: { ...(p[mk] || {}), [colabId]: { pago: true, transactionId: txId } } }));
+    }
   }
 
   /* ── BÔNUS ── */
@@ -76,13 +108,36 @@ export default function AgenciaColaboradoras() {
       amount: parseFloat(String(bonusForm.amount).replace(',', '.')) || 0,
       descricao: bonusForm.descricao.trim() || 'Bônus',
       pago: false,
+      transactionId: null,
     }]);
     setBonusForm({ colaboradoraId: '', amount: '', descricao: '' });
     setShowBonusForm(false);
   }
 
-  function toggleBonusPago(id) {
-    setBonus(b => b.map(bon => bon.id === id ? { ...bon, pago: !bon.pago } : bon));
+  async function toggleBonusPago(id) {
+    const bon = bonus.find(b => b.id === id);
+    const colab = list.find(c => c.id === bon.colaboradoraId);
+
+    if (bon.pago) {
+      if (bon.transactionId) { try { await deleteTransaction(bon.transactionId); } catch {} }
+      setBonus(b => b.map(x => x.id === id ? { ...x, pago: false, transactionId: null } : x));
+    } else {
+      let txId = null;
+      try {
+        const tx = await createTransaction({
+          description: `${colab?.name || 'Colaboradora'} — bônus: ${bon.descricao}`,
+          amount: bon.amount,
+          type: 'gasto',
+          category: '👩‍💼 Colaboradoras',
+          person: 'Creatorizando',
+          context: 'agencia',
+          source: 'web',
+          date: new Date().toISOString(),
+        });
+        txId = tx.id;
+      } catch {}
+      setBonus(b => b.map(x => x.id === id ? { ...x, pago: true, transactionId: txId } : x));
+    }
   }
 
   function removeBonus(id) {
