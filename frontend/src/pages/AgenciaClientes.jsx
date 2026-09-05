@@ -476,11 +476,89 @@ function ClientCard({ client, onRefresh, onDelete, month, year }) {
   );
 }
 
+function GlobalCostModal({ clients, month, year, onClose, onSave }) {
+  const refMonth = `${year}-${String(month).padStart(2, '0')}`;
+  const [form, setForm] = useState({
+    clientId: clients[0]?.id || '',
+    description: '',
+    amount: '',
+    category: COST_CATEGORIES[0],
+    date: new Date().toISOString().slice(0, 10),
+    referenceMonth: refMonth,
+  });
+  const [saving, setSaving] = useState(false);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await addClientCost(Number(form.clientId), {
+        description: form.description,
+        amount: parseFloat(String(form.amount).replace(',', '.')),
+        category: form.category,
+        date: form.date,
+        referenceMonth: form.referenceMonth,
+      });
+      onSave();
+    } finally { setSaving(false); }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+        <div className="flex items-center justify-between p-5 border-b">
+          <h2 className="text-lg font-bold">💸 Lançar Custo</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          <div>
+            <label className="label">Cliente</label>
+            <select className="input" value={form.clientId} onChange={e => setForm(f => ({ ...f, clientId: e.target.value }))} required>
+              {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="label">Descrição</label>
+            <input className="input" placeholder="Ex: Creator @fulano, produção de vídeo..." value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} required />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="label">Valor (R$)</label>
+              <input className="input" type="number" step="0.01" min="0.01" placeholder="0,00" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} required />
+            </div>
+            <div>
+              <label className="label">Data do pagamento</label>
+              <input className="input" type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} required />
+            </div>
+          </div>
+          <div>
+            <label className="label">Categoria</label>
+            <select className="input" value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}>
+              {COST_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="label">Mês de referência (competência)</label>
+            <input className="input" type="month" value={form.referenceMonth} onChange={e => setForm(f => ({ ...f, referenceMonth: e.target.value }))} required />
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose} className="btn-ghost flex-1">Cancelar</button>
+            <button type="submit" disabled={saving} className="text-white font-semibold py-2 px-4 rounded-xl hover:opacity-90 flex-1" style={{ background: 'linear-gradient(135deg, #0d1b3e, #c45825)' }}>
+              {saving ? 'Lançando...' : 'Lançar custo'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function AgenciaClientes() {
   const now = new Date();
   const [clients, setClients]   = useState([]);
   const [loading, setLoading]   = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [costModalOpen, setCostModalOpen] = useState(false);
   const [filter, setFilter]     = useState('active');
   const [month, setMonth]       = useState(now.getMonth() + 1);
   const [year, setYear]         = useState(now.getFullYear());
@@ -557,10 +635,16 @@ export default function AgenciaClientes() {
             <h1 className="text-xl font-bold">Clientes</h1>
             <p className="text-white/60 text-sm mt-0.5">Contratos e recebimentos</p>
           </div>
-          <button onClick={() => setModalOpen(true)}
-            className="bg-white/15 hover:bg-white/25 text-white border border-white/30 font-semibold text-sm py-2 px-4 rounded-xl transition-all backdrop-blur-sm">
-            + Novo Cliente
-          </button>
+          <div className="flex gap-2">
+            <button onClick={() => setCostModalOpen(true)}
+              className="bg-white/10 hover:bg-white/20 text-white border border-white/20 font-semibold text-sm py-2 px-4 rounded-xl transition-all backdrop-blur-sm">
+              💸 Lançar custo
+            </button>
+            <button onClick={() => setModalOpen(true)}
+              className="bg-white/15 hover:bg-white/25 text-white border border-white/30 font-semibold text-sm py-2 px-4 rounded-xl transition-all backdrop-blur-sm">
+              + Novo Cliente
+            </button>
+          </div>
         </div>
       </div>
 
@@ -647,6 +731,16 @@ export default function AgenciaClientes() {
 
       {modalOpen && (
         <ClientModal onClose={() => setModalOpen(false)} onSave={handleCreate} />
+      )}
+
+      {costModalOpen && clients.length > 0 && (
+        <GlobalCostModal
+          clients={clients}
+          month={month}
+          year={year}
+          onClose={() => setCostModalOpen(false)}
+          onSave={() => { setCostModalOpen(false); load(); }}
+        />
       )}
     </div>
   );
