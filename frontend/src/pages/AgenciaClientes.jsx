@@ -87,9 +87,12 @@ function PaymentRow({ payment, onConfirm, onUnconfirm }) {
 
 const COST_CATEGORIES = ['👤 Creators', '🎬 Produção', '🔧 Ferramentas', '📦 Outros'];
 
+const SERVICE_TYPES = ['Contratação de Creators', 'Permuta / Comissão', 'Outro'];
+
 function ClientCard({ client, onRefresh, onDelete, month, year }) {
   const [expanded, setExpanded] = useState(false);
   const [editingStatus, setEditingStatus] = useState(false);
+  const [editingInfo, setEditingInfo] = useState(false);
   const [addingPayments, setAddingPayments] = useState(false);
   const [newPayments, setNewPayments] = useState([{ amount: '', dueDate: '', description: '' }]);
 
@@ -157,7 +160,21 @@ function ClientCard({ client, onRefresh, onDelete, month, year }) {
   const serviceType = serviceTypeMatch?.[1] || null;
   const cleanNotes  = serviceType ? client.notes.replace(/^\[.+?\]\n?/, '').trim() : client.notes;
 
+  const [editForm, setEditForm] = useState({
+    name: client.name,
+    serviceType: serviceType || '',
+    notes: cleanNotes || '',
+  });
+
   const statusInfo = STATUS_LABELS[client.status] || STATUS_LABELS.active;
+
+  async function handleSaveInfo(e) {
+    e.preventDefault();
+    const notesWithType = [editForm.serviceType ? `[${editForm.serviceType}]` : '', editForm.notes.trim()].filter(Boolean).join('\n') || undefined;
+    await updateClient(client.id, { name: editForm.name.trim(), status: client.status, notes: notesWithType || null });
+    setEditingInfo(false);
+    onRefresh();
+  }
 
   async function handleStatusChange(status) {
     await updateClient(client.id, { name: client.name, status, notes: client.notes });
@@ -248,12 +265,45 @@ function ClientCard({ client, onRefresh, onDelete, month, year }) {
             className="btn-ghost text-xs py-1 px-2">
             {expanded ? '▲' : '▼'}
           </button>
-          <button onClick={() => setEditingStatus(!editingStatus)}
+          <button onClick={() => { setEditingInfo(!editingInfo); setEditingStatus(false); }}
+            className="btn-ghost text-xs py-1 px-2">✏️</button>
+          <button onClick={() => { setEditingStatus(!editingStatus); setEditingInfo(false); }}
             className="btn-ghost text-xs py-1 px-2">⚙️</button>
           <button onClick={() => { if (confirm(`Excluir cliente "${client.name}"?`)) onDelete(client.id); }}
             className="btn-ghost text-xs py-1 px-2 hover:text-red-500">🗑️</button>
         </div>
       </div>
+
+      {/* Painel de edição */}
+      {editingInfo && (
+        <form onSubmit={handleSaveInfo} className="mt-3 pt-3 border-t border-gray-100 space-y-3">
+          <p className="text-xs font-semibold text-gray-600">Editar campanha</p>
+          <div>
+            <label className="label">Nome do cliente / marca</label>
+            <input className="input" value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} required />
+          </div>
+          <div>
+            <label className="label">Categoria de serviço</label>
+            <div className="flex gap-2 flex-wrap">
+              {SERVICE_TYPES.map(opt => (
+                <button key={opt} type="button"
+                  onClick={() => setEditForm(f => ({ ...f, serviceType: f.serviceType === opt ? '' : opt }))}
+                  className={`py-1.5 px-3 rounded-xl font-medium text-xs transition-colors border-2 ${editForm.serviceType === opt ? 'border-[#c45825] bg-orange-50 text-[#c45825]' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}>
+                  {opt === 'Contratação de Creators' ? '🎬 ' : opt === 'Permuta / Comissão' ? '🤝 ' : '📋 '}{opt}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="label">Observações</label>
+            <input className="input" placeholder="Detalhes do contrato..." value={editForm.notes} onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))} />
+          </div>
+          <div className="flex gap-2">
+            <button type="button" onClick={() => setEditingInfo(false)} className="btn-ghost flex-1 text-sm">Cancelar</button>
+            <button type="submit" className="text-white text-sm py-1.5 px-3 rounded-lg hover:opacity-90 flex-1" style={{ background: 'linear-gradient(135deg, #0d1b3e, #c45825)' }}>Salvar</button>
+          </div>
+        </form>
+      )}
 
       {/* Menu de status */}
       {editingStatus && (
